@@ -27,6 +27,7 @@ import sympy as sp
 from sympy import(sqrt, log, sin, cos, tan, asin, acos, atan, pi, E, factorial, 
                   Abs, ceilling, floor )
 from dataclasses import field
+from dataclasses import dataclass
 from duckdb import datetime, date, timedelta
 from math
 from functools import lru_cache
