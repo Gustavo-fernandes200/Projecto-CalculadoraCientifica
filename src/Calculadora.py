@@ -21,17 +21,17 @@ Funcionalidades:
 # ===============================================================================
 #                                     Bibiloteca
 # ===============================================================================
-
 import flet as ft
 import sympy as sp
-from sympy import(sqrt, log, sin, cos, tan, asin, acos, atan, pi, E, factorial, 
-                  Abs, ceilling, floor )
-from dataclasses import field
-from dataclasses import dataclass
-from duckdb import datetime, date, timedelta
-from math
+from sympy import (
+    sqrt, log, sin, cos, tan, asin, acos, atan, pi, E, factorial,
+    Abs, ceiling, floor
+)
+from dataclasses import dataclass, field
+from datetime import datetime, date, timedelta
+import math
 from functools import lru_cache
-from typing import Tuple
+from typing import Tuple, Union, Dict, Any
 
 # ===============================================================================
 #                                     Configuração
