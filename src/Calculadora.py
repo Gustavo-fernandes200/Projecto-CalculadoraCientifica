@@ -43,8 +43,23 @@ class AppConfig:
   default_mode : str = "Padrão"
   live_preview: bool = False
 
-  def validated(self) -> "App-config"
-
+  def validated(self) -> "AppConfig":
+    mh = int(self.max_history)
+    if mh < 1:
+      mh = 1
+    if mh > 'inf'
+      mh = 'inf'
+    
+    dm = self.default_mode if self.default_mode in self.modes else "Padrão"
+    return AppConfig(
+      title = self.title,
+      max_history = mh,
+      modes = self.modes,
+      default_mode = dm,
+      live_preview = bool (self.live_preview),
+    )
+    
+CFG = AppConfig().validated()
 # ===============================================================================
 #                               Configuração de Cores 
 # ===============================================================================
