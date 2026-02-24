@@ -39,26 +39,30 @@ from typing import Tuple, Union, Dict, Any
 @dataclass(frozen = True)
 class AppConfig:
   title : str = "Calculadora Cientifica"
-  max_history : int = float('inf') #infinito
+  max_history : Union[int,float] = float('inf') #infinito
   modes : Tuple[str, ...] = ("Padrão","Científica","Gráfico","Programador")
   default_mode : str = "Padrão"
   live_preview: bool = False
 
   def validated(self) -> "AppConfig":
-    mh = int(self.max_history)
-    if mh < 1:
-      mh = 1
-    if mh > ('inf')
-      mh = ('inf') 
-    
-    dm = self.default_mode if self.default_mode in self.modes else "Padrão"
-    return AppConfig(
-      title = self.title,
-      max_history = mh,
-      modes = self.modes,
-      default_mode = dm,
-      live_preview = bool (self.live_preview),
-    )
+      mh_raw = self.max_history
+
+      if isinstance(mh_raw, (int, float)) and math.isfinite(mh_raw):
+          mh = int(mh_raw)
+          if mh < 1:
+              mh = 1
+      else:
+          mh = float("inf")
+
+      dm = self.default_mode if self.default_mode in self.modes else "Padrão"
+
+      return AppConfig(
+          title=self.title,
+          max_history=mh,
+          modes=self.modes,
+          default_mode=dm,
+          live_preview=bool(self.live_preview),
+      )
     
 CFG = AppConfig().validated()
 # ===============================================================================
