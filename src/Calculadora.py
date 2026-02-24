@@ -39,9 +39,11 @@ from functools import lru_cache
 class AppConfig:
   title : str = "Calculadora Cientifica"
   max_history : int = float('inf')
-  modes : Tuple[str, ...]
+  modes : Tuple[str, ...] = ("Padrão","Científica","Gráfico","Programador")
+  default_mode : str = "Padrão"
+  live_preview: bool = False
 
-
+  def validated(self) -> "App-config"
 
 # ===============================================================================
 #                               Configuração de Cores 
