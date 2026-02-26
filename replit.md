@@ -7,9 +7,6 @@ A scientific calculator web application built with Python and the Flet UI framew
 A multi-mode scientific calculator supporting:
 - Standard mode
 - Scientific mode
-- Graphing mode
-- Programmer mode
-- Date mode
 
 ## Tech Stack
 
