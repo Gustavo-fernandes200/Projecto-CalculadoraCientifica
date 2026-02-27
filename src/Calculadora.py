@@ -40,7 +40,7 @@ from typing import Tuple, Union, Dict, Any
 class AppConfig:
   title : str = "Calculadora Cientifica"
   max_history : Union[int,float] = float('inf') #infinito
-  modes : Tuple[str, ...] = ("Padrão","Científica","Gráfico","Programador")
+  modes : Tuple[str, ...] = ("Padrão","Científica")
   default_mode : str = "Padrão"
   live_preview: bool = False
 
@@ -136,6 +136,11 @@ MODE_ICONS = {
     "Programador": ft.Icons.DATA_OBJECT_ROUNDED,
     "Data":        ft.Icons.DATE_RANGE_ROUNDED,
 }
+
+# ================================ Historico ====================================
+
+
 # ===============================================================================
 #                               Motor de Cálculo 
 # ===============================================================================
+
