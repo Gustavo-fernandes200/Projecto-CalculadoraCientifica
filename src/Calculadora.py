@@ -21,7 +21,9 @@ Funcionalidades:
 # ===============================================================================
 #                                     Bibiloteca
 # ===============================================================================
+
 import flet as ft
+import duckdb as db
 import sympy as sp
 from sympy import (
     sqrt, log, sin, cos, tan, asin, acos, atan, pi, E, factorial,
@@ -32,6 +34,7 @@ from datetime import datetime, date, timedelta
 import math
 from functools import lru_cache
 from typing import Tuple, Union, Dict, Any
+from pathlib import Path
 
 # ===============================================================================
 #                                     Configuração
@@ -70,47 +73,66 @@ CFG = AppConfig().validated()
 # ===============================================================================
 
 C = {
-    "bg"          : "#0A0E1A",
-    "surface"     : "#111827",
-    "surface2"    : "#1C2333",
-    "glass"       : "#151C2E",
-    "card"        : "#161E30",
-    "card2"       : "#1A2540",
-    "border"      : "#232E45",
-    "border_light": "#2E3C58",
-    "btn_digit"   : "#1A2235",
-    "btn_op"      : "#1E1438",
-    "btn_fn"      : "#0D1C2E",
-    "btn_extra"   : "#181F35",
-    "btn_prog"    : "#1A1610",
-    "btn_clear"   : "#2A1015",
-    "accent"      : "#00D4A0",
-    "accent_dim"  : "#00D4A015",
-    "accent2"     : "#8B5CF6",
-    "accent2_dim" : "#8B5CF615",
-    "accent3"     : "#38BDF8",
-    "accent3_dim" : "#38BDF815",
+    # ── Fundos ────────────────────────────────────────────
+    
+    "bg"          : "#0D1B3E",   # tema: navy profundo (Google Calc Android)
+    "surface"     : "#0F2045",
+    "surface2"    : "#142650",
+    "card"        : "#102040",
+    "card2"       : "#162A55",
+    "border"      : "#1A2E58",
+    "border_light": "#22406A",
+
+    # ── Botões ────────────────────────────────────────────
+
+    "btn_digit"   : "#1D3A70",   # azul médio — dígitos
+    "btn_op"      : "#2B5CC8",   # azul brilhante — operadores
+    "btn_fn"      : "#1D3A70",   # igual dígitos — funções científicas
+    "btn_util"    : "#3D72E8",   # azul claro — AC / () / %
+    "btn_extra"   : "#1D3A70",
+    "btn_prog"    : "#142050",
+    "btn_clear"   : "#1D3A70",
+    "btn_eq"      : "#BF50C8",   # rosa/magenta — botão =
+
+    # ── Acents (mantidos para modos não-padrão) ───────────
+
+    "btn_ac"      : "#3D72E8",
+    "accent"      : "#BF50C8",
+    "accent_dim"  : "#BF50C815",
+    "accent2"     : "#3D72E8",
+    "accent2_dim" : "#3D72E815",
+    "accent3"     : "#5BA8FF",
+    "accent3_dim" : "#5BA8FF15",
     "accent4"     : "#FBBF24",
     "accent4_dim" : "#FBBF2415",
     "accent5"     : "#F472B6",
     "accent5_dim" : "#F472B615",
     "danger"      : "#F87171",
-    "danger_dim"  : "#F8717115",
-    "text_primary": "#EFF2F7",
-    "text_second" : "#5A6882",
-    "text_hint"   : "#3A4A64",
-    "text_fn"     : "#38BDF8",
-    "text_op"     : "#B09FFF",
-    "text_eq"     : "#001A14",
-    "btn_eq"      : "#00D4A0",
+    "danger_dim"  : "#F8717118",
+
+    # ── Texto ─────────────────────────────────────────────
+    "text_primary": "#FFFFFF",
+    "text_second" : "#5C7EA8",
+    "text_hint"   : "#2E4870",
+    "text_fn"     : "#7BBCFF",
+    "text_op"     : "#FFFFFF",
+    "text_eq"     : "#FFFFFF",
 }
 
 MODE_COLORS = {
+
     "Padrão":      C["accent"],
-    "Científica":  C["accent3"],
-    "Gráfica":     C["accent2"],
-    "Programador": C["accent4"],
-    "Data":        C["accent5"],
+    "Científica":  C["accent2"],
+}
+
+MODE_ICONS = {
+
+    "Padrão":      ft.Icons.CALCULATE_ROUNDED,
+    "Científica":  ft.Icons.FUNCTIONS_ROUNDED,
+}
+
+BTN_SIMBOLS = {
+
 }
 
 UI = {
@@ -129,16 +151,161 @@ UI = {
   "shadow": "#00000090",
 }
 
-MODE_ICONS = {
-    "Padrão":      ft.Icons.CALCULATE_ROUNDED,
-    "Científica":  ft.Icons.FUNCTIONS_ROUNDED,
-    "Gráfica":     ft.Icons.SHOW_CHART_ROUNDED,
-    "Programador": ft.Icons.DATA_OBJECT_ROUNDED,
-    "Data":        ft.Icons.DATE_RANGE_ROUNDED,
-}
-
 # ================================ Historico ====================================
+class HistDB:
+    def __init__(self, db_path: str, max_history: Union[int, float] = 200):
+        self.db_path = str(db_path)
+        self.max_history = max_history
 
+        # Garante que a pasta existe
+        Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+
+        # CORREÇÃO: como importaste "duckdb as db", tens de usar db.connect(...)
+        with db.connect(self.db_path) as c:
+            c.execute("CREATE SEQUENCE IF NOT EXISTS hseq START 1")
+            c.execute("""
+                CREATE TABLE IF NOT EXISTS history (
+                    id INTEGER PRIMARY KEY DEFAULT nextval('hseq'),
+                    mode VARCHAR,
+                    expression VARCHAR,
+                    result VARCHAR,
+                    ts TIMESTAMP DEFAULT current_timestamp
+                )
+            """)
+
+    def insert(self, mode, expr, result):
+        expr = (expr or "")[:256]
+        result = (result or "")[:512]
+
+        with db.connect(self.db_path) as c:
+            c.execute("BEGIN")
+            try:
+                c.execute(
+                    "INSERT INTO history(mode, expression, result) VALUES (?, ?, ?)",
+                    [mode, expr, result],
+                )
+                self._trim_in_conn(c)
+                c.execute("COMMIT")
+            except Exception:
+                c.execute("ROLLBACK")
+                raise
+
+    def _trim_in_conn(self, c):
+        mh = self.max_history
+
+        # Se for infinito (ou None), não faz trim
+        if mh is None:
+            return
+        if isinstance(mh, float) and math.isinf(mh):
+            return
+
+        mh = int(mh)
+        if mh < 1:
+            mh = 1
+
+        n = c.execute("SELECT COUNT(*) FROM history").fetchone()[0]
+        if n > mh:
+            c.execute("""
+                DELETE FROM history
+                WHERE id IN (
+                    SELECT id
+                    FROM history
+                    ORDER BY ts ASC, id ASC
+                    LIMIT ?
+                )
+            """, [n - mh])
+
+    def fetch(self, mode=None):
+        with db.connect(self.db_path) as c:
+            if mode:
+                rows = c.execute("""
+                    SELECT id, mode, expression, result, ts
+                    FROM history
+                    WHERE mode = ?
+                    ORDER BY ts DESC, id DESC
+                """, [mode]).fetchall()
+            else:
+                rows = c.execute("""
+                    SELECT id, mode, expression, result, ts
+                    FROM history
+                    ORDER BY ts DESC, id DESC
+                """).fetchall()
+
+        return [
+            {
+                "id": r[0],
+                "mode": r[1],
+                "expression": r[2],
+                "result": r[3],
+                "ts": str(r[4])[:16],
+            }
+            for r in rows
+        ]
+
+    def delete(self, eid):
+        with db.connect(self.db_path) as c:
+            c.execute("DELETE FROM history WHERE id = ?", [int(eid)])
+
+    def clear(self, mode=None):
+        with db.connect(self.db_path) as c:
+            if mode:
+                c.execute("DELETE FROM history WHERE mode = ?", [mode])
+            else:
+                c.execute("DELETE FROM history")
+
+
+async def main(page: ft.Page):
+    storage_paths = ft.StoragePaths()
+
+    items = []
+    for label, method in [
+        ("Application cache directory", storage_paths.get_application_cache_directory),
+        (
+            "Application documents directory",
+            storage_paths.get_application_documents_directory,
+        ),
+        (
+            "Application support directory",
+            storage_paths.get_application_support_directory,
+        ),
+        ("Downloads directory", storage_paths.get_downloads_directory),
+        ("External cache directories", storage_paths.get_external_cache_directories),
+        (
+            "External storage directories",
+            storage_paths.get_external_storage_directories,
+        ),
+        ("Library directory", storage_paths.get_library_directory),
+        ("External storage directory", storage_paths.get_external_storage_directory),
+        ("Temporary directory", storage_paths.get_temporary_directory),
+        ("Console log filename", storage_paths.get_console_log_filename),
+    ]:
+        try:
+            value = await method()
+        except ft.FletUnsupportedPlatformException as e:
+            value = f"Not supported: {e}"
+        except Exception as e:
+            value = f"Error: {e}"
+        else:
+            if isinstance(value, list):
+                value = ", ".join(value)
+            elif value is None:
+                value = "Unavailable"
+
+        items.append(
+            ft.Text(
+                spans=[
+                    ft.TextSpan(
+                        f"{label}: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD)
+                    ),
+                    ft.TextSpan(value),
+                ]
+            )
+        )
+
+    page.add(ft.Column(items, spacing=5))
+
+
+ft.run(main)
 
 # ===============================================================================
 #                               Motor de Cálculo 

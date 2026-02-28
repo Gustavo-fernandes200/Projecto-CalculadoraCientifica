@@ -10,6 +10,7 @@ authors = [
 dependencies = [
     "flet>=0.80.5",
     "sympy>=1.14.0",
+    "duckdb>=1.4.4",
 ]
 
 [dependency-groups]
