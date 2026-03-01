@@ -72,6 +72,7 @@ class AppConfig:
       )
     
 CFG = AppConfig().validated()
+
 # ===============================================================================
 #                               Configuração de Cores 
 # ===============================================================================
@@ -115,6 +116,7 @@ C = {
     "danger_dim"  : "#F8717118",
 
     # ── Texto ─────────────────────────────────────────────
+
     "text_primary": "#FFFFFF",
     "text_second" : "#5C7EA8",
     "text_hint"   : "#2E4870",
@@ -135,9 +137,93 @@ MODE_ICONS = {
     "Científica":  ft.Icons.FUNCTIONS_ROUNDED,
 }
 
+# ===============================================================================
+#                               Configuração de Botões
+# ===============================================================================
+
 BTN_SIMBOLS = {
 
+    # ── Digitos Numericos ─────────────────────────────────────────────
+
+    "0"    : {"bg": C["btn_digit"],                              "fs": 22},
+    "1"    : {"bg": C["btn_digit"],                              "fs": 22},
+    "2"    : {"bg": C["btn_digit"],                              "fs": 22},
+    "3"    : {"bg": C["btn_digit"],                              "fs": 22},
+    "4"    : {"bg": C["btn_digit"],                              "fs": 22},
+    "5"    : {"bg": C["btn_digit"],                              "fs": 22},
+    "6"    : {"bg": C["btn_digit"],                              "fs": 22},
+    "7"    : {"bg": C["btn_digit"],                              "fs": 22},
+    "8"    : {"bg": C["btn_digit"],                              "fs": 22},
+    "9"    : {"bg": C["btn_digit"],                              "fs": 22},
+    "."    : {"bg": C["btn_digit"],                              "fs": 26, "fw": ft.FontWeight.W_700},
+
+    # ── Operadores ──────────────────────────────────────────────────────────────────────────────────────────
+
+    "+"    : {"bg": C["btn_op"],                                 "fs": 22},
+    "-"    : {"bg": C["btn_op"],                                 "fs": 22},
+    "x"    : {"bg": C["btn_op"],                                 "fs": 22},
+    "/"    : {"bg": C["btn_op"],                                 "fs": 22},
+    "^"    : {"bg": C["btn_op"],                                 "fs": 22},
+
+    # ── Utilitários (AC / parênteses / percentagem / retrocesso) ─────────────────────────────────────────────
+    
+    "AC"    : {"bg": C["btn_util"],  "fs": 17, "fw": ft.FontWeight.W_700, "glow": C["btn_util"] + "35"},
+    "( )"   : {"bg": C["btn_util"],  "fs": 15},
+    "%"     : {"bg": C["btn_util"],  "fs": 18},
+    "⌫"    : {"bg": C["btn_digit"], "fs": 20},
+
+    # ── Funções Cientificas - Trigonométrica Básica ──────────────────────────────────────────────────────────────────────────────── 
+    
+    "sin"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
+    "cos"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
+    "tan"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
+    
+    # ── Funções Cientificas - Trigonométrica Inversa ────────────────────────────────────────────────────────────────────────────────
+    
+    "asin"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 11},
+    "acos"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 11},
+    "atan"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 11},
+    
+    # ── Constantes π  ────────────────────────────────────────────────────────────────────────────────
+    
+    "π"    : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 18},
+    "e"    : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 18},
+    
+    # ── Inversão e Potencias  ────────────────────────────────────────────────────────────────────────────────
+
+    "1/x"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
+    "√"    : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 15},
+    "xⁿ"   : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
+    "x²"   : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
+
+    # ── Logaritmos e Exponencial ────────────────────────────────────────────────────────────────────────────────
+    
+    "log"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
+    "ln"   : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
+    "eˣ"   : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
+    
+    # ── Fatorial e Módulo ────────────────────────────────────────────────────────────────────────────────    
+
+    "n!"   : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
+    "mod"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
+    "|x|"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 12},
+
 }
+def mk(key: str, handler, *, h=None, bg=None, fg=None) -> ft.Container:
+
+    cfg = BTN_SIMBOLS[key]
+    label = "C" if key == "C_p" else key
+    return btn(
+
+        label, handler,
+        bg   = bg or cfg["bg"],
+        fg   = fg or cfg.get("fg", "#FFFFFF"),
+        bc   = cfg.get("bc"),
+        fs   = cfg["fs"],
+        fw   = cfg.get("fw", ft.FontWeight.W_400),
+        glow = cfg.get("glow"),
+        h    = h,
+    )
 
 UI = {
   "page_bg"      : C["bg"],
