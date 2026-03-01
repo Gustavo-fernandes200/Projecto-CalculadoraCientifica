@@ -32,6 +32,10 @@ from sympy import (
 from dataclasses import dataclass, field
 from datetime import datetime, date, timedelta
 import math
+import re
+import os
+import sys
+import json
 from functools import lru_cache
 from typing import Tuple, Union, Dict, Any
 from pathlib import Path
@@ -136,19 +140,19 @@ BTN_SIMBOLS = {
 }
 
 UI = {
-  "page_bg": C["bg"],
-  "display_bg" : C["bg"],
+  "page_bg"      : C["bg"],
+  "display_bg"   : C["bg"],
   "display_main" : C["text_primary"],
   "display_expr" : C["text_second"],
-  "key_bg" : C["surface2"],
-  "key_text" : C["text_primary"],
-  "mem_text" : C["text_second"],
-  "op_text": C["accent3"],
-  "eq_bg": C["accent3"],
-  "eq_text": "#FFFFFF",
-  "top_btn_bg": C["surface2"],
-  "top_btn_icon": C["text_primary"],
-  "shadow": "#00000090",
+  "key_bg"       : C["surface2"],
+  "key_text"     : C["text_primary"],
+  "mem_text"     : C["text_second"],
+  "op_text"      : C["accent3"],
+  "eq_bg"        : C["accent3"],
+  "eq_text"      : "#FFFFFF",
+  "top_btn_bg"   : C["surface2"],
+  "top_btn_icon" : C["text_primary"],
+  "shadow"       : "#00000090",
 }
 
 # ================================ Historico ====================================
@@ -310,4 +314,3 @@ ft.run(main)
 # ===============================================================================
 #                               Motor de Cálculo 
 # ===============================================================================
-
