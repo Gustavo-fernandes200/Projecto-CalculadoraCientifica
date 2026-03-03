@@ -280,7 +280,31 @@ _FAST_NS: dict = {
 
 }
 
-# ── Mapeamento de funções para avaliação rápida (sem sympy) ─────────────────────────────────────────────
+# ── Mapeamento de expressões compiladas para verficação rápida  ─────────────────────────────────────────────
+
+__RE_FACTORIAL = re.compile(r"(\d+)!")
+__RE_SUBS: list[Tuple[re.Pattern, str]] = [
+    
+    (re.compile(r"\bsqrt\b"),  "sqrt"),
+    (re.compile(r"\bln\b"),    "ln"),
+    (re.compile(r"\blog\b"),   "log"),
+    (re.compile(r"\bsin\b"),   "sin"),
+    (re.compile(r"\bcos\b"),   "cos"),
+    (re.compile(r"\btan\b"),   "tan"),
+    (re.compile(r"\basin\b"),  "asin"),
+    (re.compile(r"\bacos\b"),  "acos"),
+    (re.compile(r"\batan\b"),  "atan"),
+    (re.compile(r"\babs\b"),   "abs"),
+    (re.compile(r"\bceil\b"),  "ceiling"),
+    (re.compile(r"\bfloor\b"), "floor"),
+    (re.compile(r"\bexp\b"),   "exp"),
+    (re.compile(r"π"),         "pi"),
+    (re.compile(r"x"),          "*"),
+    (re.compile(r"÷"),          "/"),
+    (re.compile(r"\^"),          "**"),
+]
+
+
 
 # ===============================================================================
 #                               Historico de Cálculos
