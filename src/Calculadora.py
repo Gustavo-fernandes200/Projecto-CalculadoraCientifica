@@ -207,8 +207,8 @@ BTN_SIMBOLS = {
     "n!"   : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
     "mod"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
     "|x|"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 12},
-
 }
+
 def mk(key: str, handler, *, h=None, bg=None, fg=None) -> ft.Container:
 
     cfg = BTN_SIMBOLS[key]
@@ -241,10 +241,46 @@ UI = {
   "shadow"       : "#00000090",
 }
 
+# ── Constantes de estilo dos botões ─────────────────────────────────────────────
+
+BTN_H      = 58   # altura botão portrait (expand dinâmico)
+BTN_H_LAND = 50   # altura botão landscape (fixa — permite overflow + scroll)
+BTN_H_FN   = 46   # funções científicas
+BTN_R      = 14   # border-radius
+
 # ===============================================================================
 #                               Motor de Cálculo 
 # ===============================================================================
 
+_NS_SYMPY = {
+
+    "sqrt" :sqrt, "log"     :log,     "ln"         :log,
+    "sin"  :sin,  "cos"     :cos,     "tan"        :tan,
+    "asin" :asin, "acos"    :acos,    "atan"       :atan,
+    "Abs"  :Abs,  "ceiling" :ceiling, "floor"      :floor,
+    "pi"   :pi,   "E"       :E,       "factorial"  :factorial, 
+    "exp"  :sp.exp,
+}
+
+_FAST_NS: dict = {
+    "__builtins__": {}, # bloqueia acesso a builtins para segurança e evitar uso indevido
+
+    # Funções Trigonométricas e Inversas 
+    "sin" :   math.sin,   "cos" :   math.cos,   "tan" :   math.tan,
+    "asin":   math.asin,  "acos":   math.acos,  "atan":   math.atan,
+
+    # Logaritmos, Potencias e Raizs
+    "sqrt"     :  math.sqrt,  "log"  :   math.log,   "log10": math.log10,
+    "exp"      :  math.exp,   "abs"  :   abs,
+    "ceil"     :  math.ceil,  "floor":   math.floor,
+    "factorial":  math.factorial,
+
+    # Constantes
+    "pi":    math.pi,    "e":     math.e,     "E":     math.e,
+
+}
+
+# ── Mapeamento de funções para avaliação rápida (sem sympy) ─────────────────────────────────────────────
 
 # ===============================================================================
 #                               Historico de Cálculos
