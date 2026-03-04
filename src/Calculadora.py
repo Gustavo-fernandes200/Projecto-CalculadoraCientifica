@@ -306,6 +306,102 @@ __RE_SUBS: list[Tuple[re.Pattern, str]] = [
 
 # ── Núcleo do Motor de Cálculo  ─────────────────────────────────────────────
 
+# ---- Arquitetura de Velocidade de Cálculo - Nivel 1 -------------------------------
+@lru_cache(maxsize = 4096) # cache de resultados para acelerar cálculos repetidos
+def eval_expr(expr: str) -> str:
+
+    # "Abs(" → "abs(" para compatibilidade com _FAST_NS e segurança (evita acesso a 
+    # builtins e outros nomes potencialmente perigosos)
+    e = expr.replace("Abs(", "abs(").replace("ceiling(", "ceil(")
+    v = eval(e, _FAST_NS)
+    
+    if not isinstance(v, (int, float, complex)):
+        raise TypeError("Resultado não numérico")
+    f = float(v)
+
+    if not math.isfinite(f):
+        raise ValueError("Resultado indefinido.")
+    return _fmt(int(f) if f == int(f) else f)
+
+# ---- Arquitetura de Velocidade de Cálculo - Nivel 2 -------------------------------
+@lru_cache(maxsize = 512) # cache de expressões compiladas para acelerar cálculos complexos
+def _eval_expr(expr: str) -> str:
+
+    sym = sp.sympify(expr, locals=_NS)
+    sym = sp.simplify(sym)
+
+    if sym.is_number:
+        f = float(sym)
+        if not math.isfinite(f):
+            raise ValueError("Resultado indefinido.")
+        v = int(f) if sym == int(f) else f
+        return _fmt(v)
+    return str(sym)
+
+def _fmt(v) -> str:
+    if isinstance(v, int):
+        return f"{v:,}".replace(",", "\u2009")
+    return f"{v:,.10f}".rstrip("0").rstrip(".").replace(",", "\u2009")
+
+def _fmt_expr(expr: str) -> str:
+
+    def _sep(m):
+        s = m.group(0)
+        if len(s) < 4:
+            return s
+        buf = []
+        for i, ch in enumerate(reversed(s)):
+            if i > 0 and i % 3 == 0:
+                buf.append("\u2009")
+            buf.append(ch)
+        return "".join(reversed(buf))
+    return re.sub(r"\d+", _sep, expr)
+
+def calcular(expression: str) -> str:
+
+    # ── Normalização com regexes pré-compilados ───────────────────────────────
+    e = expression.strip()
+    for pattern, repl in _RE_SUBS:
+        e = pattern.sub(repl, e)
+    e = _RE_FACTORIAL.sub(lambda m: f"factorial({m.group(1)})", e)
+
+    # ── Tier 1 — Fast path ────────────────────────────────────────────────────
+    try:
+        return _eval_fast(e)
+    except Exception:
+        pass  # não computável no fast path → tentar SymPy
+
+    # ── Tier 2 — SymPy (fallback simbólico) ──────────────────────────────────
+    try:
+        return _eval_sympy(e)
+    except Exception as ex:
+        raise ValueError(str(ex))
+
+
+def normalizar_expr(expr: str) -> str:
+    
+    # Normalização básica de expressões para compatibilidade com o motor de cálculo e melhor legibilidade
+    e = expr.strip()
+    e = e.replace("^",  "**")
+    e = e.replace("π",  "pi")
+    e = e.replace("×",  "*")
+    e = e.replace("÷",  "/")
+    e = e.replace("−",  "-")
+
+    # Número no início de token + letra/( → * -> (?<![a-zA-Z0-9]) garante que não apanha dígitos dentro de identificadores
+    # como "log10" (onde "0" é precedido de "1" que é precedido de "g")
+    e = re.sub(r"(?<![a-zA-Z0-9])(\d+)([a-zA-Z(])", r"\1*\2", e)
+
+    # "pi" + letra/( → * -> (?<![a-zA-Z]) garante que "pi" não seja parte de um identificador maior como "pippo"
+    e = re.sub(r"(?<![a-zA-Z])(pi)(?=[a-zA-Z(])", r"\1*", e)
+
+    # "e" isolado (constante de Euler) + letra/( → * -> (?<![a-zA-Z]) garante que "e" seja isolado e não parte de um identificador maior como "exp" ou "euler")
+    e = re.sub(r"\b(e)\b(?=[a-zA-Z(])", r"\1*", e)
+
+    # Fecho ) + letra/( → * -> \)(?=[a-zA-Z(]) garante que o ) seja seguido de letra ou ( sem espaço, indicando multiplicação implícita
+    e = re.sub(r"\)([a-zA-Z(])", r")*\1", e)
+
+    return e
 
 # ===============================================================================
 #                               Historico de Cálculos
