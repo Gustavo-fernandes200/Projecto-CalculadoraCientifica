@@ -508,6 +508,9 @@ class HistDB:
             else:
                 c.execute("DELETE FROM history")
 
+# ===============================================================================
+#          Construção de Layout — Padding, Bordas, Sombras e Botões (Flet)
+# ===============================================================================
 
 async def main(page: ft.Page):
     storage_paths = ft.StoragePaths()
