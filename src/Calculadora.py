@@ -512,7 +512,7 @@ class HistDB:
 #          Construção de Layout — Padding, Bordas, Sombras e Botões (Flet)
 # ===============================================================================
 
-# Função de construção de botões com estilo consistente e opções personalizáveis
+# ── Construção dos botões em elementos de UI ───────────────────────────────────────────────────────── 
 
 def pad(a): 
     return ft.Padding(left=a, top=a, right=a, bottom=a)
@@ -541,7 +541,7 @@ def brd_side(color, w=1):
 def shd(color, blur=18):
     return ft.BoxShadow(blur_radius=blur, color=color, offset=ft.Offset(0, 4))
 
-# ── Componentes de botão ─────────────────────────────────────────────────────────
+# ── Criação da estrutura grafica dos Botões ─────────────────────────────────────────────────────────
 
 def btn(label, on_click, *, bg, fg="#FFFFFF", bc=None, expand=1,
         h=None, fs=19, fw=ft.FontWeight.W_400, glow=None):
