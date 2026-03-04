@@ -512,6 +512,118 @@ class HistDB:
 #          Construção de Layout — Padding, Bordas, Sombras e Botões (Flet)
 # ===============================================================================
 
+# Função de construção de botões com estilo consistente e opções personalizáveis
+
+def pad(a): 
+    return ft.Padding(left=a, top=a, right=a, bottom=a)
+
+def padxy(x, y):
+    return ft.Padding(left=x, right=x, top=y, bottom=y)
+
+def padltrb(l, t, r, b):
+    return ft.Padding(left=l, top=t, right=r, bottom=b)
+
+def brd(color, w=1):
+    return ft.border.all(w, color)
+
+def brd_bottom(color, w=1):
+    return ft.Border(bottom=ft.BorderSide(w, color))
+
+def brd_top(color, w=1):
+    return ft.Border(top=ft.BorderSide(w, color))
+
+def brd_side(color, w=1):
+    return ft.Border(
+        left=ft.BorderSide(w, color),
+        right=ft.BorderSide(w, color),
+        bottom=ft.BorderSide(w, color))
+
+def shd(color, blur=18):
+    return ft.BoxShadow(blur_radius=blur, color=color, offset=ft.Offset(0, 4))
+
+# ── Componentes de botão ─────────────────────────────────────────────────────────
+
+def btn(label, on_click, *, bg, fg="#FFFFFF", bc=None, expand=1,
+        h=None, fs=19, fw=ft.FontWeight.W_400, glow=None):
+    bc      = bc or bg
+    shd_val = (shd(glow, 20) if glow
+               else ft.BoxShadow(blur_radius=10, color="#00000045",
+                                 offset=ft.Offset(0, 4)))
+    args = dict(
+        content=ft.Text(label, color=fg, size=fs, weight=fw,
+                        text_align=ft.TextAlign.CENTER, font_family="mono"),
+        bgcolor=bg, border=brd(bc), border_radius=BTN_R,
+        expand=expand,
+        alignment=ft.Alignment(0, 0),
+        on_click=on_click, ink=True, shadow=shd_val,
+        animate=ft.Animation(60, ft.AnimationCurve.EASE_OUT),
+    )
+    if h is not None:
+        args["height"] = h
+    return ft.Container(**args)
+
+def eq_btn(on_click, bg=None):
+    
+    bg = bg or C["btn_eq"]
+    return ft.Container(
+        content=ft.Text("=", color="#FFFFFF", size=26,
+                        weight=ft.FontWeight.W_500, font_family="mono"),
+        bgcolor=bg, border_radius=BTN_R,
+        expand=1,
+        alignment=ft.Alignment(0, 0),
+        on_click=on_click, ink=True,
+        shadow=shd(bg + "55", 24),
+        animate=ft.Animation(60, ft.AnimationCurve.EASE_OUT),
+    )
+
+def eq_bar(on_click, bg=None):
+    
+    bg = bg or C["btn_eq"]
+    return ft.Row([ft.Container(
+        content=ft.Text("=", color="#FFFFFF", size=26,
+                        weight=ft.FontWeight.W_500, font_family="mono"),
+        bgcolor=bg, border_radius=BTN_R,
+        expand=True,
+        alignment=ft.Alignment(0, 0),
+        on_click=on_click, ink=True,
+        shadow=shd(bg + "55", 24),
+    )], expand=True)
+
+def row(*items):
+    
+    return ft.Row(list(items), spacing=6, expand=True)
+
+def slbl(text, color=None):
+    
+    return ft.Container(
+        content=ft.Text(text, size=10, color=color or C["text_second"],
+                        weight=ft.FontWeight.W_700, font_family="mono"),
+        padding=padltrb(2, 12, 2, 4),
+    )
+
+def gsep(c1=None, c2=None):
+    
+    return ft.Container(
+        height=1, margin=ft.margin.symmetric(vertical=6),
+        gradient=ft.LinearGradient(
+            begin=ft.Alignment(-1, 0), end=ft.Alignment(1, 0),
+            colors=["transparent",
+                    c1 or C["accent3"] + "60",
+                    c2 or C["accent2"] + "60",
+                    "transparent"]),
+    )
+
+def action_btn(label, on_click, color):
+    
+    return ft.Container(
+        content=ft.Text(label, size=14, color="#FFFFFF",
+                        font_family="mono", weight=ft.FontWeight.W_700),
+        bgcolor=color, border_radius=BTN_R, height=56,
+        alignment=ft.Alignment(0, 0),
+        on_click=on_click, ink=True,
+        shadow=shd(color + "50", 22),
+    )
+
 async def main(page: ft.Page):
     storage_paths = ft.StoragePaths()
 
