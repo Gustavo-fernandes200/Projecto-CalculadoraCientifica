@@ -512,6 +512,35 @@ class HistDB:
 #          Construção de Layout — Padding, Bordas, Sombras e Botões (Flet)
 # ===============================================================================
 
+# Função de construção de botões com estilo consistente e opções personalizáveis
+
+def pad(a): 
+    return ft.Padding(left=a, top=a, right=a, bottom=a)
+
+def padxy(x, y):
+    return ft.Padding(left=x, right=x, top=y, bottom=y)
+
+def padltrb(l, t, r, b):
+    return ft.Padding(left=l, top=t, right=r, bottom=b)
+
+def brd(color, w=1):
+    return ft.border.all(w, color)
+
+def brd_bottom(color, w=1):
+    return ft.Border(bottom=ft.BorderSide(w, color))
+
+def brd_top(color, w=1):
+    return ft.Border(top=ft.BorderSide(w, color))
+
+def brd_side(color, w=1):
+    return ft.Border(
+        left=ft.BorderSide(w, color),
+        right=ft.BorderSide(w, color),
+        bottom=ft.BorderSide(w, color))
+
+def shd(color, blur=18):
+    return ft.BoxShadow(blur_radius=blur, color=color, offset=ft.Offset(0, 4))
+
 async def main(page: ft.Page):
     storage_paths = ft.StoragePaths()
 
