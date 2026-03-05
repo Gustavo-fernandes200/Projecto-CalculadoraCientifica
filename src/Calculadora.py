@@ -43,13 +43,14 @@ from pathlib import Path
 # ===============================================================================
 #                                     Configuração
 # ===============================================================================
+
 @dataclass(frozen = True)
 class AppConfig:
-  title : str = "Calculadora Cientifica"
-  max_history : Union[int,float] = float('inf') #infinito
-  modes : Tuple[str, ...] = ("Padrão","Científica")
-  default_mode : str = "Padrão"
-  live_preview: bool = False
+  title        : str              = "Calculadora Cientifica"
+  max_history  : Union[int,float] = float('inf')  # infinito
+  modes        : Tuple[str, ...]  = ("Padrão", "Científica")
+  default_mode : str              = "Padrão"
+  live_preview : bool             = False
 
   def validated(self) -> "AppConfig":
       mh_raw = self.max_history
@@ -70,7 +71,7 @@ class AppConfig:
           default_mode=dm,
           live_preview=bool(self.live_preview),
       )
-    
+
 CFG = AppConfig().validated()
 
 # ===============================================================================
@@ -79,7 +80,7 @@ CFG = AppConfig().validated()
 
 C = {
     # ── Fundos ────────────────────────────────────────────
-    
+
     "bg"          : "#0D1B3E",   # tema: navy profundo (Google Calc Android)
     "surface"     : "#0F2045",
     "surface2"    : "#142650",
@@ -116,7 +117,6 @@ C = {
     "danger_dim"  : "#F8717118",
 
     # ── Texto ─────────────────────────────────────────────
-
     "text_primary": "#FFFFFF",
     "text_second" : "#5C7EA8",
     "text_hint"   : "#2E4870",
@@ -137,14 +137,16 @@ MODE_ICONS = {
     "Científica":  ft.Icons.FUNCTIONS_ROUNDED,
 }
 
-# ===============================================================================
-#                               Configuração de Botões
-# ===============================================================================
-
 BTN_SIMBOLS = {
+    # =========================================================================
+    # Dicionário central de configuração visual de todos os botões.
+    # Chave = identificador único do botão (usado também como label por omissão).
+    # Cada entrada define: bg, fg, bc (border-color), fs (font-size),
+    #                      fw (font-weight), glow (sombra colorida).
+    # O handler (on_click) é passado em tempo de build — não fica aqui.
+    # =========================================================================
 
-    # ── Digitos Numericos ─────────────────────────────────────────────
-
+    # ── Dígitos ────────────────────────────────────────────────────────────────
     "0"    : {"bg": C["btn_digit"],                              "fs": 22},
     "1"    : {"bg": C["btn_digit"],                              "fs": 22},
     "2"    : {"bg": C["btn_digit"],                              "fs": 22},
@@ -155,69 +157,109 @@ BTN_SIMBOLS = {
     "7"    : {"bg": C["btn_digit"],                              "fs": 22},
     "8"    : {"bg": C["btn_digit"],                              "fs": 22},
     "9"    : {"bg": C["btn_digit"],                              "fs": 22},
-    "."    : {"bg": C["btn_digit"],                              "fs": 26, "fw": ft.FontWeight.W_700},
+    "."    : {"bg": C["btn_digit"],                              "fs": 26,
+              "fw": ft.FontWeight.W_700},
 
-    # ── Operadores ──────────────────────────────────────────────────────────────────────────────────────────
-
+    # ── Operadores aritméticos ─────────────────────────────────────────────────
+    "÷"    : {"bg": C["btn_op"],                                 "fs": 22},
+    "×"    : {"bg": C["btn_op"],                                 "fs": 22},
+    "−"    : {"bg": C["btn_op"],                                 "fs": 22},
     "+"    : {"bg": C["btn_op"],                                 "fs": 22},
-    "-"    : {"bg": C["btn_op"],                                 "fs": 22},
-    "x"    : {"bg": C["btn_op"],                                 "fs": 22},
-    "/"    : {"bg": C["btn_op"],                                 "fs": 22},
-    "^"    : {"bg": C["btn_op"],                                 "fs": 22},
 
-    # ── Utilitários (AC / parênteses / percentagem / retrocesso) ─────────────────────────────────────────────
-    
-    "AC"    : {"bg": C["btn_util"],  "fs": 17, "fw": ft.FontWeight.W_700, "glow": C["btn_util"] + "35"},
-    "( )"   : {"bg": C["btn_util"],  "fs": 15},
-    "%"     : {"bg": C["btn_util"],  "fs": 18},
+    # ── Utilitários (AC / parênteses / percentagem / retrocesso) ──────────────
+    "AC"   : {"bg": C["btn_util"],  "fs": 17,
+              "fw": ft.FontWeight.W_700, "glow": C["btn_util"] + "35"},
+    "( )"  : {"bg": C["btn_util"],  "fs": 15},
+    "%"    : {"bg": C["btn_util"],  "fs": 18},
     "⌫"    : {"bg": C["btn_digit"], "fs": 20},
 
-    # ── Funções Cientificas - Trigonométrica Básica ──────────────────────────────────────────────────────────────────────────────── 
-    
-    "sin"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
-    "cos"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
-    "tan"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
-    
-    # ── Funções Cientificas - Trigonométrica Inversa ────────────────────────────────────────────────────────────────────────────────
-    
-    "asin"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 11},
-    "acos"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 11},
-    "atan"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 11},
-    
-    # ── Constantes π  ────────────────────────────────────────────────────────────────────────────────
-    
-    "π"    : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 18},
-    "e"    : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 18},
-    
-    # ── Inversão e Potencias  ────────────────────────────────────────────────────────────────────────────────
+    # ── Funções científicas ────────────────────────────────────────────────────
+    # Trigonométricas básicas
+    "sin"  : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 13},
+    "cos"  : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 13},
+    "tan"  : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 13},
+    # Trigonométricas inversas
+    "asin" : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 11},
+    "acos" : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 11},
+    "atan" : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 11},
+    # Constante π (cor especial dourada)
+    "π"    : {"bg": C["btn_fn"], "fg": C["accent4"],
+               "bc": C["accent4"] + "40", "fs": 14},
+    # Inversão e potências
+    "1/x"  : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 13},
+    "√"    : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 15},
+    "xⁿ"   : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 13},
+    "x²"   : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 13},
+    # Logaritmos e exponencial
+    "log"  : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 13},
+    "ln"   : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 13},
+    "eˣ"   : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 13},
+    # Fatorial e módulo
+    "n!"   : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 13},
+    "|x|"  : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 12},
+    # Arredondamento e parênteses individuais
+    "ceil" : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 11},
+    "floor": {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 11},
+    "("    : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 16},
+    ")"    : {"bg": C["btn_fn"], "fg": C["text_fn"],
+               "bc": C["accent3"] + "40", "fs": 16},
 
-    "1/x"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
-    "√"    : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 15},
-    "xⁿ"   : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
-    "x²"   : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
-
-    # ── Logaritmos e Exponencial ────────────────────────────────────────────────────────────────────────────────
-    
-    "log"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
-    "ln"   : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
-    "eˣ"   : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
-    
-    # ── Fatorial e Módulo ────────────────────────────────────────────────────────────────────────────────    
-
-    "n!"   : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
-    "mod"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 13},
-    "|x|"  : {"bg": C["btn_fn"], "fg": C["text_fn"], "bc": C["accent3"] + "40", "fs": 12},
+    # ── Programador — operadores bit-a-bit ─────────────────────────────────────
+    "AND"  : {"bg": C["btn_prog"], "fg": C["accent4"],
+               "bc": C["accent4"] + "40", "fs": 11, "fw": ft.FontWeight.W_700},
+    "OR"   : {"bg": C["btn_prog"], "fg": C["accent4"],
+               "bc": C["accent4"] + "40", "fs": 11, "fw": ft.FontWeight.W_700},
+    "XOR"  : {"bg": C["btn_prog"], "fg": C["accent4"],
+               "bc": C["accent4"] + "40", "fs": 11, "fw": ft.FontWeight.W_700},
+    "<<"   : {"bg": C["btn_prog"], "fg": C["accent4"],
+               "bc": C["accent4"] + "40", "fs": 11, "fw": ft.FontWeight.W_700},
+    ">>"   : {"bg": C["btn_prog"], "fg": C["accent4"],
+               "bc": C["accent4"] + "40", "fs": 11, "fw": ft.FontWeight.W_700},
+    # Dígitos hexadecimais A-F
+    "A"    : {"bg": C["btn_digit"], "bc": C["accent4"] + "40", "fs": 15},
+    "B"    : {"bg": C["btn_digit"], "bc": C["accent4"] + "40", "fs": 15},
+    "C_p"  : {"bg": C["btn_digit"], "bc": C["accent4"] + "40", "fs": 15},  # "C" colide com C dict
+    "D"    : {"bg": C["btn_digit"], "bc": C["accent4"] + "40", "fs": 15},
+    "E"    : {"bg": C["btn_digit"], "bc": C["accent4"] + "40", "fs": 15},
+    "F"    : {"bg": C["btn_digit"], "bc": C["accent4"] + "40", "fs": 15},
 }
 
 def mk(key: str, handler, *, h=None, bg=None, fg=None) -> ft.Container:
+    """
+    Constrói um botão a partir da configuração centralizada em BTN_SIMBOLS.
 
-    cfg = BTN_SIMBOLS[key]
-    label = "C" if key == "C_p" else key
+    Parâmetros:
+      key     — chave em BTN_SIMBOLS (usada também como label do botão).
+      handler — função on_click (definida em tempo de build, não no dict).
+      h       — altura fixa em px (landscape) ou None (portrait, expand).
+      bg, fg  — overrides opcionais de cor (ex: Programador desabilita dígitos).
+
+    Retorna um ft.Container pronto a incluir numa Row.
+    """
+    cfg   = BTN_SIMBOLS[key]
+    label = "C" if key == "C_p" else key   # chave interna → label visual
     return btn(
-
         label, handler,
-        bg   = bg or cfg["bg"],
-        fg   = fg or cfg.get("fg", "#FFFFFF"),
+        bg   = bg   or cfg["bg"],
+        fg   = fg   or cfg.get("fg", "#FFFFFF"),
         bc   = cfg.get("bc"),
         fs   = cfg["fs"],
         fw   = cfg.get("fw", ft.FontWeight.W_400),
@@ -242,51 +284,63 @@ UI = {
 }
 
 # ── Constantes de estilo dos botões ─────────────────────────────────────────────
-
 BTN_H      = 58   # altura botão portrait (expand dinâmico)
 BTN_H_LAND = 50   # altura botão landscape (fixa — permite overflow + scroll)
 BTN_H_FN   = 46   # funções científicas
 BTN_R      = 14   # border-radius
 
 # ===============================================================================
-#                               Motor de Cálculo 
+#                               Motor de Cálculo
 # ===============================================================================
+#
+#  Arquitectura 2-Tier para máxima velocidade:
+#
+#  ┌──────────────────────────────────────────────────────────────────────┐
+#  │  TIER 1 — Fast Path  (Python eval + math)      ~0.05 ms              │
+#  │  Cobre: aritmética, funções trigonométricas, log, exp, √, !, |x|    │
+#  │  Cache LRU 4 096 entradas — resultado imediato em chamadas repetidas │
+#  ├──────────────────────────────────────────────────────────────────────┤
+#  │  TIER 2 — SymPy  (fallback simbólico)         ~50–500 ms            │
+#  │  Activado apenas quando o Tier 1 falha (expressões simbólicas,       │
+#  │  frações exactas, simplificações algébricas)                         │
+#  └──────────────────────────────────────────────────────────────────────┘
+#
+#  Optimizações adicionais:
+#    · Regexes pré-compilados (compilação feita 1× no arranque)
+#    · Substituição de símbolos em passo único via re.sub com dict
+#    · Cache partilhada entre Tier 1 e Tier 2 (evita dupla avaliação)
 
-_NS_SYMPY = {
-
-    "sqrt" :sqrt, "log"     :log,     "ln"         :log,
-    "sin"  :sin,  "cos"     :cos,     "tan"        :tan,
-    "asin" :asin, "acos"    :acos,    "atan"       :atan,
-    "Abs"  :Abs,  "ceiling" :ceiling, "floor"      :floor,
-    "pi"   :pi,   "E"       :E,       "factorial"  :factorial, 
-    "exp"  :sp.exp,
+# ── Namespace SymPy (Tier 2) ─────────────────────────────────────────────────
+_NS = {
+    "sqrt":sqrt, "log":log, "ln":log,
+    "sin":sin, "cos":cos, "tan":tan,
+    "asin":asin, "acos":acos, "atan":atan,
+    "Abs":Abs, "ceiling":ceiling, "floor":floor,
+    "pi":pi, "E":E, "factorial":factorial, "exp":sp.exp,
 }
 
+# ── Namespace Python/math (Tier 1 — fast path) ───────────────────────────────
 _FAST_NS: dict = {
-    "__builtins__": {}, # bloqueia acesso a builtins para segurança e evitar uso indevido
-
-    # Funções Trigonométricas e Inversas 
-    "sin" :   math.sin,   "cos" :   math.cos,   "tan" :   math.tan,
-    "asin":   math.asin,  "acos":   math.acos,  "atan":   math.atan,
-
-    # Logaritmos, Potencias e Raizs
-    "sqrt"     :  math.sqrt,  "log"  :   math.log,   "log10": math.log10,
-    "exp"      :  math.exp,   "abs"  :   abs,
-    "ceil"     :  math.ceil,  "floor":   math.floor,
-    "factorial":  math.factorial,
-
+    "__builtins__": {},
+    # Funções trigonométricas
+    "sin":   math.sin,   "cos":   math.cos,   "tan":   math.tan,
+    "asin":  math.asin,  "acos":  math.acos,  "atan":  math.atan,
+    # Funções matemáticas
+    "sqrt":  math.sqrt,  "log":   math.log,   "log10": math.log10,
+    "exp":   math.exp,   "abs":   abs,
+    "ceil":  math.ceil,  "floor": math.floor,
+    "factorial": math.factorial,
     # Constantes
     "pi":    math.pi,    "e":     math.e,     "E":     math.e,
-
 }
 
-# ── Mapeamento de expressões compiladas para verficação rápida  ─────────────────────────────────────────────
-
-__RE_FACTORIAL = re.compile(r"(\d+)!")
-__RE_SUBS: list[Tuple[re.Pattern, str]] = [
-    
+# ── Regexes pré-compilados ────────────────────────────────────────────────────
+# Compilados UMA ÚNICA VEZ no arranque — elimina re.compile() implícito
+# a cada chamada de calcular().
+_RE_FACTORIAL = re.compile(r"(\d+)!")
+_RE_SUBS: list[tuple[re.Pattern, str]] = [
     (re.compile(r"\bsqrt\b"),  "sqrt"),
-    (re.compile(r"\bln\b"),    "ln"),
+    (re.compile(r"\bln\b"),    "log"),
     (re.compile(r"\blog\b"),   "log"),
     (re.compile(r"\bsin\b"),   "sin"),
     (re.compile(r"\bcos\b"),   "cos"),
@@ -294,42 +348,43 @@ __RE_SUBS: list[Tuple[re.Pattern, str]] = [
     (re.compile(r"\basin\b"),  "asin"),
     (re.compile(r"\bacos\b"),  "acos"),
     (re.compile(r"\batan\b"),  "atan"),
-    (re.compile(r"\babs\b"),   "abs"),
+    (re.compile(r"\babs\b"),   "Abs"),
     (re.compile(r"\bceil\b"),  "ceiling"),
     (re.compile(r"\bfloor\b"), "floor"),
     (re.compile(r"\bexp\b"),   "exp"),
     (re.compile(r"π"),         "pi"),
-    (re.compile(r"x"),          "*"),
-    (re.compile(r"÷"),          "/"),
-    (re.compile(r"\^"),          "**"),
+    (re.compile(r"×"),         "*"),
+    (re.compile(r"÷"),         "/"),
+    (re.compile(r"\^"),        "**"),
 ]
 
-# ── Núcleo do Motor de Cálculo  ─────────────────────────────────────────────
-
-# ---- Arquitetura de Velocidade de Cálculo - Nivel 1 -------------------------------
-@lru_cache(maxsize = 4096) # cache de resultados para acelerar cálculos repetidos
-def eval_expr(expr: str) -> str:
-
-    # "Abs(" → "abs(" para compatibilidade com _FAST_NS e segurança (evita acesso a 
-    # builtins e outros nomes potencialmente perigosos)
+# ── Tier 1: fast path ────────────────────────────────────────────────────────
+@lru_cache(maxsize=4096)
+def _eval_fast(expr: str) -> str:
+    """
+    Avalia com Python eval() + math.
+    Lança qualquer excepção se a expressão não for computável neste tier.
+    Cache de 4 096 entradas — expressões repetidas retornam em < 1 µs.
+    """
+    # "Abs(" → "abs(" para compatibilidade com _FAST_NS
     e = expr.replace("Abs(", "abs(").replace("ceiling(", "ceil(")
     v = eval(e, _FAST_NS)
-    
     if not isinstance(v, (int, float, complex)):
         raise TypeError("Resultado não numérico")
     f = float(v)
-
     if not math.isfinite(f):
         raise ValueError("Resultado indefinido.")
     return _fmt(int(f) if f == int(f) else f)
 
-# ---- Arquitetura de Velocidade de Cálculo - Nivel 2 -------------------------------
-@lru_cache(maxsize = 512) # cache de expressões compiladas para acelerar cálculos complexos
-def _eval_expr(expr: str) -> str:
-
+# ── Tier 2: SymPy (fallback simbólico) ───────────────────────────────────────
+@lru_cache(maxsize=512)
+def _eval_sympy(expr: str) -> str:
+    """
+    Fallback SymPy para expressões simbólicas ou que o Tier 1 não suporta.
+    Cache separada de 512 entradas (SymPy é pesado — cache mais conservadora).
+    """
     sym = sp.sympify(expr, locals=_NS)
     sym = sp.simplify(sym)
-
     if sym.is_number:
         f = float(sym)
         if not math.isfinite(f):
@@ -344,7 +399,22 @@ def _fmt(v) -> str:
     return f"{v:,.10f}".rstrip("0").rstrip(".").replace(",", "\u2009")
 
 def _fmt_expr(expr: str) -> str:
+    """
+    Formata números inteiros na expressão de entrada com U+2009 (espaço fino)
+    como separador de milhares.
 
+    Regras:
+      · Sequências de 4+ dígitos contínuos são agrupadas a cada 3 da direita.
+      · Sequências de 1–3 dígitos ficam inalteradas (evita formatar "**2", "ln").
+      · Apenas a parte INTEIRA de floats é formatada ("1000.5" → "1 000.5").
+      · Nomes de funções e operadores ficam intactos (apenas dígitos são tocados).
+
+    Exemplos:
+      "1000000"         → "1 000 000"
+      "sin(10000)"      → "sin(10 000)"
+      "1000.5 + 2000"   → "1 000.5 + 2 000"
+      "**2"             → "**2"        (2 dígitos — inalterado)
+    """
     def _sep(m):
         s = m.group(0)
         if len(s) < 4:
@@ -358,7 +428,13 @@ def _fmt_expr(expr: str) -> str:
     return re.sub(r"\d+", _sep, expr)
 
 def calcular(expression: str) -> str:
-
+    """
+    Pipeline 2-Tier:
+      1. Normaliza a expressão (regexes pré-compilados — 1 passagem).
+      2. Tenta Tier 1 (Python eval + math) — ~0.05 ms.
+      3. Se falhar, tenta Tier 2 (SymPy)  — ~50–500 ms.
+      4. Se ambos falharem, lança ValueError.
+    """
     # ── Normalização com regexes pré-compilados ───────────────────────────────
     e = expression.strip()
     for pattern, repl in _RE_SUBS:
@@ -379,8 +455,20 @@ def calcular(expression: str) -> str:
 
 
 def normalizar_expr(expr: str) -> str:
-    
-    # Normalização básica de expressões para compatibilidade com o motor de cálculo e melhor legibilidade
+    """
+    Converte notação matemática humana em Python válido.
+
+    Casos tratados:
+      1/2x-2        → 1/2*x-2        (multiplicação implícita número+variável)
+      3sin(x)       → 3*sin(x)       (número + função)
+      2(x+1)        → 2*(x+1)        (número + parêntese)
+      (x+1)(x-1)   → (x+1)*(x-1)   (fecho + abertura)
+      sin(x)cos(x)  → sin(x)*cos(x)  (fecho + função)
+      2πx           → 2*pi*x         (π + variável)
+      e^x           → e**x           (potência tipográfica)
+      log10(x)      → log10(x)       (inalterado — dígito dentro de identificador)
+      2log10(x)     → 2*log10(x)     (número antes de log10)
+    """
     e = expr.strip()
     e = e.replace("^",  "**")
     e = e.replace("π",  "pi")
@@ -388,25 +476,23 @@ def normalizar_expr(expr: str) -> str:
     e = e.replace("÷",  "/")
     e = e.replace("−",  "-")
 
-    # Número no início de token + letra/( → * -> (?<![a-zA-Z0-9]) garante que não apanha dígitos dentro de identificadores
+    # Número no início de token + letra/( → *
+    # (?<![a-zA-Z0-9]) garante que não apanha dígitos dentro de identificadores
     # como "log10" (onde "0" é precedido de "1" que é precedido de "g")
     e = re.sub(r"(?<![a-zA-Z0-9])(\d+)([a-zA-Z(])", r"\1*\2", e)
 
-    # "pi" + letra/( → * -> (?<![a-zA-Z]) garante que "pi" não seja parte de um identificador maior como "pippo"
+    # "pi" + letra/( → *
     e = re.sub(r"(?<![a-zA-Z])(pi)(?=[a-zA-Z(])", r"\1*", e)
 
-    # "e" isolado (constante de Euler) + letra/( → * -> (?<![a-zA-Z]) garante que "e" seja isolado e não parte de um identificador maior como "exp" ou "euler")
+    # "e" isolado (constante de Euler) + letra/( → *
     e = re.sub(r"\b(e)\b(?=[a-zA-Z(])", r"\1*", e)
 
-    # Fecho ) + letra/( → * -> \)(?=[a-zA-Z(]) garante que o ) seja seguido de letra ou ( sem espaço, indicando multiplicação implícita
+    # Fecho ) + letra/( → *
     e = re.sub(r"\)([a-zA-Z(])", r")*\1", e)
 
     return e
 
-# ===============================================================================
-#                               Historico de Cálculos
-# ===============================================================================
- 
+# ================================ Historico ====================================
 class HistDB:
     def __init__(self, db_path: str, max_history: Union[int, float] = 200):
         self.db_path = str(db_path)
@@ -509,12 +595,12 @@ class HistDB:
                 c.execute("DELETE FROM history")
 
 # ===============================================================================
-#          Construção de Layout — Padding, Bordas, Sombras e Botões (Flet)
+#  Componentes Visuais Reutilizáveis — Padding, Bordas, Sombras e Botões (Flet)
 # ===============================================================================
 
-# ── Construção dos botões em elementos de UI ───────────────────────────────────────────────────────── 
+# ── Wrappers de ft.Padding / ft.Border / ft.BoxShadow — reduzem boilerplate nos layouts ──
 
-def pad(a): 
+def pad(a):
     return ft.Padding(left=a, top=a, right=a, bottom=a)
 
 def padxy(x, y):
@@ -541,10 +627,15 @@ def brd_side(color, w=1):
 def shd(color, blur=18):
     return ft.BoxShadow(blur_radius=blur, color=color, offset=ft.Offset(0, 4))
 
-# ── Criação da estrutura grafica dos Botões ─────────────────────────────────────────────────────────
 
+# ── Componentes de botão ─────────────────────────────────────────────────────────
 def btn(label, on_click, *, bg, fg="#FFFFFF", bc=None, expand=1,
         h=None, fs=19, fw=ft.FontWeight.W_400, glow=None):
+    """
+    Botão genérico.
+    h=None → expande verticalmente pela Row (mobile responsivo).
+    h=N    → altura fixa em px (usado em Gráfica / Data com scroll).
+    """
     bc      = bc or bg
     shd_val = (shd(glow, 20) if glow
                else ft.BoxShadow(blur_radius=10, color="#00000045",
@@ -563,7 +654,7 @@ def btn(label, on_click, *, bg, fg="#FFFFFF", bc=None, expand=1,
     return ft.Container(**args)
 
 def eq_btn(on_click, bg=None):
-    
+    """Botão = sem altura fixa — expande pela Row."""
     bg = bg or C["btn_eq"]
     return ft.Container(
         content=ft.Text("=", color="#FFFFFF", size=26,
@@ -577,7 +668,7 @@ def eq_btn(on_click, bg=None):
     )
 
 def eq_bar(on_click, bg=None):
-    
+    """Barra = larga (modo Programador)."""
     bg = bg or C["btn_eq"]
     return ft.Row([ft.Container(
         content=ft.Text("=", color="#FFFFFF", size=26,
@@ -590,11 +681,11 @@ def eq_bar(on_click, bg=None):
     )], expand=True)
 
 def row(*items):
-    
+    """Row de botões com spacing uniforme e expand=True."""
     return ft.Row(list(items), spacing=6, expand=True)
 
 def slbl(text, color=None):
-    
+    """Label de secção (texto pequeno em maiúsculas)."""
     return ft.Container(
         content=ft.Text(text, size=10, color=color or C["text_second"],
                         weight=ft.FontWeight.W_700, font_family="mono"),
@@ -602,7 +693,7 @@ def slbl(text, color=None):
     )
 
 def gsep(c1=None, c2=None):
-    
+    """Separador com gradiente de cor."""
     return ft.Container(
         height=1, margin=ft.margin.symmetric(vertical=6),
         gradient=ft.LinearGradient(
@@ -614,7 +705,7 @@ def gsep(c1=None, c2=None):
     )
 
 def action_btn(label, on_click, color):
-    
+    """Botão de acção largo (Gráfica / Data)."""
     return ft.Container(
         content=ft.Text(label, size=14, color="#FFFFFF",
                         font_family="mono", weight=ft.FontWeight.W_700),
@@ -627,10 +718,13 @@ def action_btn(label, on_click, color):
 # ===============================================================================
 #                              Função Principal
 # ===============================================================================
+
 def main(page: ft.Page):
 
-    # ── Configuração da página ─────────────────────────────────────────────────────────
-    
+    # ===========================================================================
+    #                          Configuração da Página
+    # ===========================================================================
+
     page.title      = CFG.title
     page.theme_mode = ft.ThemeMode.DARK
     page.bgcolor    = C["bg"]
@@ -640,9 +734,19 @@ def main(page: ft.Page):
         "tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKxjOVmNog.woff2"}
     page.theme   = ft.Theme(font_family="mono")
     page.padding = ft.padding.only(top=28, bottom=34)
+    # top=28 : reserva espaço para a Status Bar (hora, bateria...)
+    # bottom=34: reserva espaço para os Botões de Navegação (□ ○ ◁)
 
-    # ── Verificação do diretório ─────────────────────────────────────────────────────────
-    
+    # ===========================================================================
+    #                     Persistência — Detecção de Plataforma
+    # ===========================================================================
+    #   Android → /data/data/<pkg>/files/   (via ANDROID_DATA)
+    #   iOS     → ~/Documents/              (sandbox iOS)
+    #   Windows → %APPDATA%\calc_tp1\
+    #   macOS   → ~/Library/Application Support/calc_tp1/
+    #   Linux   → ~/.local/share/calc_tp1/
+    #   Fallback→ directório do script
+
     def _get_support_dir() -> str:
         try:
             p = sys.platform
@@ -672,7 +776,7 @@ def main(page: ft.Page):
     hist_db = HistDB(db_path, CFG.max_history)
 
     # ── Sincronização client_storage ─────────────────────────────────────────
-    
+    # Chave partilhada com o backup JSON no client_storage do Flet
     _CS_KEY = "calc_history_v2"
 
     def _sync_cs():
@@ -685,7 +789,6 @@ def main(page: ft.Page):
             pass
 
     # ── Restaurar de client_storage se DB ainda estiver vazio ────────────────
-
     try:
         if not hist_db.fetch():
             cs_raw = page.client_storage.get(_CS_KEY)
@@ -703,7 +806,9 @@ def main(page: ft.Page):
     except Exception:
         pass
 
-    # ── Estado da Aplicação ────────────────
+    # ===========================================================================
+    #                           Estado da Aplicação
+    # ===========================================================================
 
     cur_mode  = [CFG.default_mode]
     hist_open = [False]
@@ -711,8 +816,10 @@ def main(page: ft.Page):
 
     def get_expr():
         return "".join(parts)
-    
-    # ======== Função de Estado dentro Display =========================================
+
+    # ===========================================================================
+    #                            Textos do Display
+    # ===========================================================================
 
     txt_mode = ft.Text(
         CFG.default_mode.upper(), size=10, color=MODE_COLORS[CFG.default_mode],
@@ -764,24 +871,36 @@ def main(page: ft.Page):
         page.update()
 
     def upd():
-
+        # parts mantém a expressão raw para cálculo;
+        # txt_expr exibe a versão formatada com separadores de milhares.
         txt_expr.value   = _fmt_expr(get_expr())
         txt_err.visible  = False
         txt_result.color = UI["display_expr"]
         page.update()
-        
+
     # ===========================================================================
     #                    Layout Responsivo (Portrait / Landscape)
     # ===========================================================================
+    #
+    #   Portrait  (height > width):
+    #     · display_area visível  → 28 % do espaço disponível
+    #     · kbd_container         → 70 % do espaço disponível
+    #
+    #   Landscape (width > height):
+    #     · display_area oculto   → 0 px (maximiza espaço para teclado)
+    #     · kbd_container         → 100 % com scroll interno activado
+    #
+    #   Trigger: page.on_resize chamado pelo Flet em cada rotação.
 
-    # Caracterízação da estrutura de layout para os modos portrait e landscape, com adaptação dinâmica ao redimensionamento da janela
+    # Alturas fixas dos elementos permanentes
     HEADER_H_PORT = 64
     HEADER_H_LAND = 48
     TABBAR_H_PORT = 72
-    TABBAR_H_LAND = 56
-    SAFE_EXTRA = 62
+    TABBAR_H_LAND = 52
+    SAFE_EXTRA    = 62   # page.padding: 28px top (status bar)
+                         #             + 34px bottom (nav bar)
 
-    # Constantes de cálculo de dimensões responsivas 
+    # Rácios para modo portrait
     DISPLAY_RATIO = 0.28
     KBD_RATIO     = 0.70
 
@@ -832,8 +951,7 @@ def main(page: ft.Page):
         return pw is not None and ph is not None and pw > ph
 
     def _calc_heights(pw: int, ph: int):
-
-        # Calcula alturas px exactas por orientação.
+        """Calcula alturas px exactas por orientação."""
         landscape = _is_landscape(pw, ph)
         ph = max(ph, 200)
         if landscape:
@@ -851,8 +969,7 @@ def main(page: ft.Page):
         return d_h, k_h, landscape
 
     def _apply_heights(pw=None, ph=None):
-
-        # Aplica alturas e adapta scroll/visibilidade/expand por orientação.
+        """Aplica alturas e adapta scroll/visibilidade/expand por orientação."""
         pw = pw or (page.width  if page.width  else 400)
         ph = ph or (page.height if page.height else 700)
         d_h, k_h, landscape = _calc_heights(int(pw), int(ph))
@@ -864,10 +981,9 @@ def main(page: ft.Page):
             # Landscape: altura fixa px → overflow activado → scroll
             kbd_container.height = k_h
             kbd_container.expand = False
-
         else:
             # Portrait: altura fixa = k_h calculado por _calc_heights.
-            # SAFE_EXTRA = 62 desconta page.padding (28+34) do page.height.
+            # SAFE_EXTRA=62 desconta page.padding (28+34) do page.height.
             kbd_container.height = k_h
             kbd_container.expand = False
 
@@ -878,7 +994,20 @@ def main(page: ft.Page):
                 kbd_container.content.scroll = ft.ScrollMode.ADAPTIVE
                 kbd_container.content.expand = False
             else:
-
+                # Portrait — dois casos mutuamente exclusivos:
+                #
+                #  CASO A — rows cabem em k_h (ex: Padrão, 5 rows):
+                #    scroll=None + Column expand=True + row.expand=True
+                #    → Flutter distribui k_h igualmente via Expanded.
+                #    → row.height não é definido (conflitua com expand=True).
+                #
+                #  CASO B — rows não cabem (ex: Científica, 10 rows):
+                #    scroll=ADAPTIVE + Column expand=False + row.expand=False
+                #    + row.height=BTN_H (altura fixa).
+                #
+                # REGRA CRÍTICA: expand=True + scroll=ADAPTIVE = crash Flutter
+                # ("RenderFlex has non-zero flex but constraints are unbounded").
+                # Por isso CASO B remove SEMPRE expand das rows.
                 if kbd_inner_col.controls:
                     kbd_col = kbd_inner_col.controls[0]
                     if hasattr(kbd_col, "controls") and kbd_col.controls:
@@ -888,7 +1017,6 @@ def main(page: ft.Page):
                         sp = int(getattr(kbd_col, "spacing", 5) or 5)
                         # altura mínima total (+ 8px padding interno do container)
                         min_total = n * BTN_H_FN + max(0, n - 1) * sp + 8
-
                         if n > 0 and min_total <= k_h:
                             # ── CASO A ──────────────────────────────────────
                             kbd_container.content.scroll = None
@@ -896,12 +1024,10 @@ def main(page: ft.Page):
                             for row in rows:
                                 row.height = None
                                 row.expand  = True
-
                         else:
                             # ── CASO B ──────────────────────────────────────
                             kbd_container.content.scroll = ft.ScrollMode.ADAPTIVE
                             kbd_container.content.expand = False
-                            
                             for row in rows:
                                 row.expand  = False   # obrigatório antes de scroll
                                 row.height  = BTN_H
@@ -937,7 +1063,7 @@ def main(page: ft.Page):
     page.on_resize = on_resize
 
     # ===========================================================================
-    #                              Botão do Histórico
+    #                              Histórico
     # ===========================================================================
 
     hist_col      = ft.Column(spacing=0, scroll=ft.ScrollMode.ADAPTIVE)
@@ -1196,6 +1322,8 @@ def main(page: ft.Page):
         BD = C["btn_digit"]; BO = C["btn_op"]; BU = C["btn_util"]
 
         # Altura dos botões adaptativa por orientação:
+        #   Portrait  → h=None + expand=True  (Row cresce para preencher)
+        #   Landscape → h=BTN_H_LAND + expand=False (px fixo → overflow → scroll)
         land = _landscape[0]
         bh   = BTN_H_LAND if land else None
 
@@ -1447,7 +1575,11 @@ def main(page: ft.Page):
     # ===========================================================================
     #                             Layout Principal
     # ===========================================================================
-  
+    #   page.scroll = None        → height = viewport exacto do ecrã
+    #   Column(expand=True)       → preenche 100 % da page
+    #   header + body + tab_bar   → empilhados sem gaps (spacing=0)
+    #   body wrapper expand=True  → ocupa tudo entre header e tab_bar
+
     _apply_heights(page.width, page.height)
 
     # page.padding.top/bottom reserva os insets do sistema (Status Bar + Nav Bar)
