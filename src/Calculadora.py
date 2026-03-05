@@ -1090,57 +1090,385 @@ def main(page: ft.Page):
             refresh_hist(cur_mode[0])
         page.update()
 
-"""
-async def main(page: ft.Page):
-    storage_paths = ft.StoragePaths()
+    # ===========================================================================
+    #                         Navegação — Tab Bar
+    # ===========================================================================
 
-    items = []
-    for label, method in [
-        ("Application cache directory", storage_paths.get_application_cache_directory),
-        (
-            "Application documents directory",
-            storage_paths.get_application_documents_directory,
-        ),
-        (
-            "Application support directory",
-            storage_paths.get_application_support_directory,
-        ),
-        ("Downloads directory", storage_paths.get_downloads_directory),
-        ("External cache directories", storage_paths.get_external_cache_directories),
-        (
-            "External storage directories",
-            storage_paths.get_external_storage_directories,
-        ),
-        ("Library directory", storage_paths.get_library_directory),
-        ("External storage directory", storage_paths.get_external_storage_directory),
-        ("Temporary directory", storage_paths.get_temporary_directory),
-        ("Console log filename", storage_paths.get_console_log_filename),
-    ]:
-        try:
-            value = await method()
-        except ft.FletUnsupportedPlatformException as e:
-            value = f"Not supported: {e}"
-        except Exception as e:
-            value = f"Error: {e}"
-        else:
-            if isinstance(value, list):
-                value = ", ".join(value)
-            elif value is None:
-                value = "Unavailable"
+    body_content = ft.Column(scroll=None, spacing=0, expand=True)
+    tab_row      = ft.Row([], spacing=0)
 
-        items.append(
-            ft.Text(
-                spans=[
-                    ft.TextSpan(
-                        f"{label}: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD)
-                    ),
-                    ft.TextSpan(value),
-                ]
+    def build_tab_row():
+        tabs = []
+        for m in CFG.modes:
+            mc     = MODE_COLORS[m]
+            is_sel = m == cur_mode[0]
+            tabs.append(ft.Container(
+                content=ft.Column([
+                    ft.Container(
+                        height=2,
+                        bgcolor=mc if is_sel else "transparent",
+                        border_radius=ft.BorderRadius(0,0,2,2)),
+                    ft.Container(
+                        content=ft.Icon(MODE_ICONS[m],
+                                        color=mc if is_sel else C["text_hint"],
+                                        size=22),
+                        width=44, height=28,
+                        alignment=ft.Alignment(0, 0),
+                        bgcolor=mc + "20" if is_sel else "transparent",
+                        border_radius=ft.BorderRadius(10,10,10,10)),
+                    ft.Text(m, size=9,
+                            color=mc if is_sel else C["text_hint"],
+                            font_family="mono",
+                            weight=(ft.FontWeight.W_700 if is_sel
+                                    else ft.FontWeight.W_400),
+                            text_align=ft.TextAlign.CENTER),
+                ], spacing=3,
+                   horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                   tight=True),
+                expand=True,
+                on_click=lambda e, mn=m: switch_mode(mn),
+                ink=True, padding=padxy(4, 6),
+            ))
+        tab_row.controls = tabs
+
+    tab_bar = ft.Container(
+        content=tab_row,
+        bgcolor=C["surface"],
+        border=brd_top(C["border_light"]),
+        height=70, padding=padxy(6, 0),
+        shadow=ft.BoxShadow(blur_radius=24, spread_radius=-4,
+                            color=UI["shadow"], offset=ft.Offset(0, -4)),
+    )
+
+    def switch_mode(m):
+        cur_mode[0]    = m
+        txt_mode.value = m.upper()
+        txt_mode.color = MODE_COLORS[m]
+        parts.clear()
+        reset()
+        build_tab_row()
+        rebuild_body(m)
+
+    build_tab_row()
+
+    # ===========================================================================
+    #                           Modo 1 — Padrão
+    # ===========================================================================
+
+    def build_padrao():
+        def dg(d): return lambda e: (parts.append(d), upd())
+        def op(o): return lambda e: (parts.append(f" {o} "), upd())
+        def clr(e): reset()
+
+        def bk(e):
+            if parts:
+                l = parts[-1]
+                if len(l) > 1: parts[-1] = l[:-1]
+                else:          parts.pop()
+            upd()
+
+        def paren(e):
+            expr  = get_expr()
+            opens = expr.count("(") - expr.count(")")
+            parts.append(")" if opens > 0 else "(")
+            upd()
+
+        def pct(e):
+            v = get_expr().strip()
+            if v:
+                parts.clear()
+                parts.append(f"({v})/100")
+                upd()
+
+        def eq(e):
+            raw = get_expr().strip()
+            if not raw: return
+            try:
+                r = calcular(raw)
+                set_ok(r, f"{raw} =")
+                hist_db.insert("Padrão", raw, r)
+                _sync_cs()
+                parts.clear()
+                parts.append(r.replace("\u2009", ""))
+            except ValueError as ve:
+                set_err(str(ve))
+
+        BD = C["btn_digit"]; BO = C["btn_op"]; BU = C["btn_util"]
+
+        # Altura dos botões adaptativa por orientação:
+        land = _landscape[0]
+        bh   = BTN_H_LAND if land else None
+
+        def rw(*items):
+            """Row adaptativa: expand em portrait, altura fixa em landscape."""
+            return ft.Row(list(items), spacing=6, expand=not land, wrap=False)
+
+        def eb(on_click, bg=None):
+            """Botão = adaptativo."""
+            bg = bg or C["btn_eq"]
+            return ft.Container(
+                content=ft.Text("=", color="#FFFFFF", size=26,
+                                weight=ft.FontWeight.W_500, font_family="mono"),
+                bgcolor=bg, border_radius=BTN_R,
+                expand=True, height=bh,
+                alignment=ft.Alignment(0, 0),
+                on_click=on_click, ink=True,
+                shadow=shd(bg + "55", 24),
+                animate=ft.Animation(60, ft.AnimationCurve.EASE_OUT),
             )
-        )
 
-    page.add(ft.Column(items, spacing=5))
-"""
+        # mk(key, handler, h=bh) → visual lido de BTN_SIMBOLS[key]
+        return ft.Column([
+            rw(mk("AC",  clr,     h=bh),
+               mk("( )", paren,   h=bh),
+               mk("%",   pct,     h=bh),
+               mk("÷",   op("/"), h=bh)),
+            rw(mk("7", dg("7"), h=bh), mk("8", dg("8"), h=bh),
+               mk("9", dg("9"), h=bh), mk("×", op("*"), h=bh)),
+            rw(mk("4", dg("4"), h=bh), mk("5", dg("5"), h=bh),
+               mk("6", dg("6"), h=bh), mk("−", op("-"), h=bh)),
+            rw(mk("1", dg("1"), h=bh), mk("2", dg("2"), h=bh),
+               mk("3", dg("3"), h=bh), mk("+", op("+"), h=bh)),
+            rw(mk("0", dg("0"), h=bh),
+               mk(".", dg("."),  h=bh),
+               mk("⌫", bk,      h=bh),
+               eb(eq)),
+        ], spacing=5, expand=not land)
+
+    # ===========================================================================
+    #                          Modo 2 — Científica
+    # ===========================================================================
+
+    def build_cientifica():
+        def dg(d): return lambda e: (parts.append(d), upd())
+        def op(o): return lambda e: (parts.append(f" {o} "), upd())
+        def fn(f): return lambda e: (parts.append(f"{f}("), upd())
+        def clr(e): reset()
+
+        def bk(e):
+            if parts:
+                l = parts[-1]
+                if len(l) > 1: parts[-1] = l[:-1]
+                else:          parts.pop()
+            upd()
+
+        def paren(e):
+            expr  = get_expr()
+            opens = expr.count("(") - expr.count(")")
+            parts.append(")" if opens > 0 else "(")
+            upd()
+
+        def pct(e):
+            v = get_expr().strip()
+            if v:
+                parts.clear()
+                parts.append(f"({v})/100")
+                upd()
+
+        def eq(e):
+            raw = get_expr().strip()
+            if not raw: return
+            try:
+                r = calcular(raw)
+                set_ok(r, f"{raw} =")
+                hist_db.insert("Científica", raw, r)
+                _sync_cs()
+                parts.clear()
+                parts.append(r.replace("\u2009", ""))
+            except ValueError as ve:
+                set_err(str(ve))
+
+        BF  = C["btn_fn"]
+        TF  = C["text_fn"]
+        BBF = C["accent3"] + "40"
+        BD  = C["btn_digit"]
+        BO  = C["btn_op"]
+        BU  = C["btn_util"]
+
+        # Altura adaptativa por orientação (mesmo padrão que Padrão)
+        land  = _landscape[0]
+        bh    = BTN_H_LAND if land else None
+        bh_fn = max(BTN_H_LAND - 4, 38) if land else None  # funções ligeiramente mais baixas
+
+        def rw(*items):
+            return ft.Row(list(items), spacing=6, expand=not land, wrap=False)
+
+        def eb(on_click, bg=None):
+            bg = bg or C["btn_eq"]
+            return ft.Container(
+                content=ft.Text("=", color="#FFFFFF", size=26,
+                                weight=ft.FontWeight.W_500, font_family="mono"),
+                bgcolor=bg, border_radius=BTN_R,
+                expand=True, height=bh,
+                alignment=ft.Alignment(0, 0),
+                on_click=on_click, ink=True,
+                shadow=shd(bg + "55", 24),
+                animate=ft.Animation(60, ft.AnimationCurve.EASE_OUT),
+            )
+
+        # mk(key, handler, h=…) → visual lido de BTN_SIMBOLS[key]
+        return ft.Column([
+            # ── Funções: 5 rows × 4 colunas ──────────────────────────────────
+            # Row 1: Trigonométricas básicas
+            rw(mk("sin",   fn("sin"),             h=bh_fn),
+               mk("cos",   fn("cos"),             h=bh_fn),
+               mk("tan",   fn("tan"),             h=bh_fn),
+               mk("π",     dg("π"),               h=bh_fn)),
+            # Row 2: Trigonométricas inversas + inversão
+            rw(mk("asin",  fn("asin"),            h=bh_fn),
+               mk("acos",  fn("acos"),            h=bh_fn),
+               mk("atan",  fn("atan"),            h=bh_fn),
+               mk("1/x",   lambda e: (parts.append("1/("), upd()), h=bh_fn)),
+            # Row 3: Potência / raiz / logaritmos
+            rw(mk("√",     fn("sqrt"),            h=bh_fn),
+               mk("xⁿ",    lambda e: (parts.append("**"),  upd()), h=bh_fn),
+               mk("log",   fn("log"),             h=bh_fn),
+               mk("ln",    fn("ln"),              h=bh_fn)),
+            # Row 4: Exponencial / fatorial / módulo / x²
+            rw(mk("eˣ",    fn("exp"),             h=bh_fn),
+               mk("n!",    lambda e: (parts.append("!"),   upd()), h=bh_fn),
+               mk("|x|",   fn("Abs"),             h=bh_fn),
+               mk("x²",    lambda e: (parts.append("**2"), upd()), h=bh_fn)),
+            # Row 5: Arredondamento / parênteses individuais
+            rw(mk("ceil",  fn("ceiling"),         h=bh_fn),
+               mk("floor", fn("floor"),           h=bh_fn),
+               mk("(",     dg("("),               h=bh_fn),
+               mk(")",     dg(")"),               h=bh_fn)),
+            # ── Grade numérica: 5 rows
+            rw(mk("AC",  clr,     h=bh),
+               mk("( )", paren,   h=bh),
+               mk("%",   pct,     h=bh),
+               mk("÷",   op("/"), h=bh)),
+            rw(mk("7", dg("7"), h=bh), mk("8", dg("8"), h=bh),
+               mk("9", dg("9"), h=bh), mk("×", op("*"), h=bh)),
+            rw(mk("4", dg("4"), h=bh), mk("5", dg("5"), h=bh),
+               mk("6", dg("6"), h=bh), mk("−", op("-"), h=bh)),
+            rw(mk("1", dg("1"), h=bh), mk("2", dg("2"), h=bh),
+               mk("3", dg("3"), h=bh), mk("+", op("+"), h=bh)),
+            rw(mk("0", dg("0"), h=bh),
+               mk(".", dg("."),  h=bh),
+               mk("⌫", bk,      h=bh),
+               eb(eq)),
+        ], spacing=5, expand=not land)
+
+    # ===========================================================================
+    #                          Rebuild do Corpo Principal
+    # ===========================================================================
+
+    SCROLL_MODES = set()  # apenas modos button-based
+
+    def rebuild_body(mode_name: str):
+        txt_mode.value = mode_name.upper()
+        txt_mode.color = MODE_COLORS[mode_name]
+        kbd = {
+            "Padrão":      build_padrao,
+            "Científica":  build_cientifica,
+        }[mode_name]()
+        body_content.controls.clear()
+
+        if mode_name in SCROLL_MODES:
+            # Modos com conteúdo longo: scroll interno
+            body_content.scroll = ft.ScrollMode.ADAPTIVE
+            body_content.expand = True
+            body_content.controls.append(
+                ft.Column([
+                    ft.Container(
+                        content=ft.Column([
+                            txt_expr,
+                            ft.Container(height=4),
+                            txt_result,
+                            txt_err,
+                        ], spacing=0),
+                        bgcolor=UI["display_bg"],
+                        padding=padltrb(20, 12, 20, 10),
+                    ),
+                    ft.Container(
+                        content=kbd, bgcolor=UI["page_bg"],
+                        padding=padltrb(10, 4, 10, 10)),
+                    hist_panel,
+                    ft.Container(height=8),
+                ], spacing=0)
+            )
+        else:
+            # Modos button-based: alturas px via _apply_heights
+            body_content.scroll = None
+            body_content.expand = True
+            kbd_inner_col.controls.clear()
+            kbd_inner_col.controls.append(kbd)
+            _apply_heights()
+            body_content.controls.append(display_area)
+            body_content.controls.append(kbd_container)
+            body_content.controls.append(hist_panel)
+
+        page.update()
+
+    # ===========================================================================
+    #                                Header
+    # ===========================================================================
+
+    header = ft.Container(
+        content=ft.Row([
+            ft.Container(
+                content=ft.Icon(ft.Icons.HISTORY_ROUNDED,
+                                color=C["text_second"], size=22),
+                width=44, height=44,
+                border_radius=ft.BorderRadius(22,22,22,22),
+                alignment=ft.Alignment(0, 0),
+                on_click=toggle_hist, ink=True,
+                bgcolor=C["surface"],
+            ),
+            ft.Container(expand=True),
+            ft.Container(
+                content=ft.Row([
+                    ft.Container(width=6, height=6,
+                                 border_radius=ft.BorderRadius(3,3,3,3),
+                                 bgcolor=MODE_COLORS[CFG.default_mode]),
+                    txt_mode,
+                ], spacing=5),
+                bgcolor=C["surface"],
+                border=brd(MODE_COLORS[CFG.default_mode] + "30"),
+                border_radius=ft.BorderRadius(20,20,20,20),
+                padding=padxy(12, 6),
+            ),
+            ft.Container(expand=True),
+            ft.Container(
+                content=ft.Icon(ft.Icons.MORE_VERT_ROUNDED,
+                                color=C["text_second"], size=22),
+                width=44, height=44,
+                border_radius=ft.BorderRadius(22,22,22,22),
+                alignment=ft.Alignment(0, 0),
+                ink=True, bgcolor=C["surface"],
+            ),
+        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+        bgcolor=UI["page_bg"],
+        padding=padltrb(12, 10, 12, 10),
+    )
+
+    # ===========================================================================
+    #                             Layout Principal
+    # ===========================================================================
+  
+    _apply_heights(page.width, page.height)
+
+    # page.padding.top/bottom reserva os insets do sistema (Status Bar + Nav Bar)
+    page.add(ft.Column([
+        header,
+        ft.Container(
+            content=body_content,
+            expand=True,
+            bgcolor=UI["page_bg"],
+            clip_behavior=ft.ClipBehavior.HARD_EDGE,
+        ),
+        tab_bar,
+    ], spacing=0, expand=True))
+
+    rebuild_body(CFG.default_mode)
+
+
+# ===============================================================================
+#                               Ponto de Entrada
+# ===============================================================================
 
 if __name__ == "__main__":
     ft.run(main, view=ft.AppView.FLET_APP)
+
