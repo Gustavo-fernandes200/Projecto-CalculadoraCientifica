@@ -624,6 +624,85 @@ def action_btn(label, on_click, color):
         shadow=shd(color + "50", 22),
     )
 
+# ===============================================================================
+#                              Função Principal
+# ===============================================================================
+def main(page: ft.Page):
+
+    # ── Configuração da página ─────────────────────────────────────────────────────────
+    
+    page.title      = CFG.title
+    page.theme_mode = ft.ThemeMode.DARK
+    page.bgcolor    = C["bg"]
+    page.scroll     = None
+    page.fonts      = {"mono":
+        "https://fonts.gstatic.com/s/jetbrainsmono/v18/"
+        "tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKxjOVmNog.woff2"}
+    page.theme   = ft.Theme(font_family="mono")
+    page.padding = ft.padding.only(top=28, bottom=34)
+
+    # ── Verificação do diretório ─────────────────────────────────────────────────────────
+    
+    def _get_support_dir() -> str:
+        try:
+            p = sys.platform
+            if p == "android":
+                d    = os.environ.get("ANDROID_DATA", "/data/data")
+                base = os.path.join(d, "calc_tp1", "files")
+            elif p == "ios":
+                base = os.path.expanduser("~/Documents/calc_tp1")
+            elif p == "win32":
+                base = os.path.join(
+                    os.environ.get("APPDATA", os.path.expanduser("~")),
+                    "calc_tp1")
+            elif p == "darwin":
+                base = os.path.expanduser(
+                    "~/Library/Application Support/calc_tp1")
+            else:
+                base = os.path.expanduser("~/.local/share/calc_tp1")
+            os.makedirs(base, exist_ok=True)
+            return base
+        except Exception:
+            return os.path.dirname(os.path.abspath(__file__))
+
+    support_dir = _get_support_dir()
+    db_path     = os.path.join(support_dir, "calc_history.db")
+
+    # hist_db — instância de HistDB  (nome distinto de "db" = módulo duckdb)
+    hist_db = HistDB(db_path, CFG.max_history)
+
+    # ── Sincronização client_storage ─────────────────────────────────────────
+    
+    _CS_KEY = "calc_history_v2"
+
+    def _sync_cs():
+        """Serializa o histórico actual para client_storage (JSON)."""
+        try:
+            page.client_storage.set(
+                _CS_KEY,
+                json.dumps(hist_db.fetch(), ensure_ascii=False, default=str))
+        except Exception:
+            pass
+
+    # ── Restaurar de client_storage se DB ainda estiver vazio ────────────────
+    try:
+        if not hist_db.fetch():
+            cs_raw = page.client_storage.get(_CS_KEY)
+            if cs_raw:
+                data = json.loads(cs_raw)
+                for h in reversed(data):
+                    if isinstance(h, dict) and "expression" in h and "result" in h:
+                        try:
+                            hist_db.insert(
+                                h.get("mode", "Padrão"),
+                                h["expression"][:256],
+                                h["result"][:512])
+                        except Exception:
+                            pass
+    except Exception:
+        pass
+
+
 async def main(page: ft.Page):
     storage_paths = ft.StoragePaths()
 
