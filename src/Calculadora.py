@@ -936,6 +936,10 @@ def main(page: ft.Page):
 
     page.on_resize = on_resize
 
+    # ===========================================================================
+    #                              Botão do Histórico
+    # ===========================================================================
+    
 """
 async def main(page: ft.Page):
     storage_paths = ft.StoragePaths()
