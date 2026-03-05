@@ -769,10 +769,13 @@ def main(page: ft.Page):
         txt_err.visible  = False
         txt_result.color = UI["display_expr"]
         page.update()
+        
+    # ===========================================================================
+    #                    Layout Responsivo (Portrait / Landscape)
+    # ===========================================================================
 
     
-
-
+"""
 async def main(page: ft.Page):
     storage_paths = ft.StoragePaths()
 
@@ -822,8 +825,7 @@ async def main(page: ft.Page):
         )
 
     page.add(ft.Column(items, spacing=5))
-
-
+"""
 
 if __name__ == "__main__":
     ft.run(main, view=ft.AppView.FLET_APP)
