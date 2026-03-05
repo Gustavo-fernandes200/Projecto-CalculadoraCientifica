@@ -939,7 +939,157 @@ def main(page: ft.Page):
     # ===========================================================================
     #                              Botão do Histórico
     # ===========================================================================
-    
+
+    hist_col      = ft.Column(spacing=0, scroll=ft.ScrollMode.ADAPTIVE)
+    btn_hist_icon = ft.Icon(ft.Icons.HISTORY_ROUNDED, color=C["accent3"], size=18)
+
+    def refresh_hist(mode=None):
+        hist_col.controls.clear()
+        entries = hist_db.fetch(mode)
+        if not entries:
+            hist_col.controls.append(ft.Container(
+                content=ft.Column([
+                    ft.Icon(ft.Icons.HISTORY_TOGGLE_OFF_ROUNDED,
+                            size=36, color=C["text_hint"]),
+                    ft.Text("Sem histórico", size=13,
+                            color=C["text_second"], font_family="mono",
+                            text_align=ft.TextAlign.CENTER),
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=8),
+                padding=padxy(0, 24), alignment=ft.Alignment(0, 0)))
+            page.update()
+            return
+
+        last_date = None
+        for h in entries:
+            eid = h["id"]
+            ex  = h["expression"]
+            rs  = h["result"]
+            ts  = h["ts"]
+            mc  = MODE_COLORS.get(h.get("mode", ""), C["accent"])
+
+            try:
+                dt_obj   = datetime.strptime(ts[:10], "%Y-%m-%d")
+                cur_date = ts[:10]
+                if cur_date != last_date:
+                    last_date = cur_date
+                    if dt_obj.date() == date.today():
+                        date_lbl = "Hoje"
+                    elif dt_obj.date() == date.today() - timedelta(days=1):
+                        date_lbl = "Ontem"
+                    else:
+                        MESES = ["","janeiro","fevereiro","março","abril","maio",
+                                 "junho","julho","agosto","setembro","outubro",
+                                 "novembro","dezembro"]
+                        date_lbl = f"{dt_obj.day} {MESES[dt_obj.month]}"
+                        if dt_obj.year != date.today().year:
+                            date_lbl += f" {dt_obj.year}"
+                    hist_col.controls.append(ft.Container(
+                        content=ft.Text(date_lbl, size=11,
+                                        color=C["text_hint"], font_family="mono",
+                                        weight=ft.FontWeight.W_600),
+                        padding=padltrb(4, 14, 4, 4),
+                    ))
+            except Exception:
+                pass
+
+            def mk_recall(e_=ex, r_=rs):
+                def _(ev):
+                    parts.clear()
+                    parts.append(e_)
+                    txt_expr.value   = _fmt_expr(e_)
+                    txt_result.value = r_
+                    txt_result.color = UI["display_main"]
+                    txt_result.size  = 42
+                    txt_err.visible  = False
+                    page.update()
+                return _
+
+            def mk_del(eid_=eid):
+                def _(ev):
+                    hist_db.delete(eid_)
+                    _sync_cs()
+                    refresh_hist(cur_mode[0])
+                return _
+
+            hist_col.controls.append(ft.Container(
+                content=ft.Row([
+                    ft.Column([
+                        ft.Text(ex[:44], size=12, color=C["text_second"],
+                                font_family="mono",
+                                overflow=ft.TextOverflow.ELLIPSIS),
+                        ft.Text(rs, size=22, color=UI["display_main"],
+                                font_family="mono",
+                                weight=ft.FontWeight.W_400),
+                    ], spacing=1, expand=True),
+                    ft.Column([
+                        ft.Container(
+                            content=ft.Icon(ft.Icons.REPLAY_ROUNDED,
+                                            size=14, color=mc),
+                            on_click=mk_recall(), width=30, height=30,
+                            border_radius=ft.BorderRadius(15,15,15,15),
+                            ink=True, bgcolor=mc + "18",
+                            alignment=ft.Alignment(0, 0)),
+                        ft.Container(
+                            content=ft.Icon(ft.Icons.DELETE_OUTLINE_ROUNDED,
+                                            size=14, color=C["danger"]),
+                            on_click=mk_del(), width=30, height=30,
+                            border_radius=ft.BorderRadius(15,15,15,15),
+                            ink=True, bgcolor=C["danger_dim"],
+                            alignment=ft.Alignment(0, 0)),
+                    ], spacing=4,
+                       horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                ], spacing=10,
+                   alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                bgcolor="transparent",
+                padding=padxy(4, 10),
+                border=ft.Border(bottom=ft.BorderSide(1, C["border"])),
+                on_click=mk_recall(), ink=True,
+            ))
+        page.update()
+
+    hist_panel = ft.Container(
+        content=ft.Column([
+            ft.Row([
+                ft.Row([
+                    ft.Icon(ft.Icons.HISTORY_ROUNDED,
+                            color=C["accent3"], size=16),
+                    ft.Text("HISTÓRICO", size=10, color=C["accent3"],
+                            weight=ft.FontWeight.W_700, font_family="mono"),
+                ], spacing=6),
+                ft.Container(expand=True),
+                ft.Container(
+                    content=ft.Text("LIMPAR", size=9, color=C["danger"],
+                                    font_family="mono", weight=ft.FontWeight.W_700),
+                    on_click=lambda e: (
+                        hist_db.clear(cur_mode[0]),
+                        _sync_cs(),
+                        refresh_hist(cur_mode[0]),
+                    ),
+                    bgcolor=C["danger_dim"], border=brd(C["danger"] + "35"),
+                    border_radius=ft.BorderRadius(8,8,8,8),
+                    padding=padxy(10, 5), ink=True),
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            ft.Container(height=4),
+            hist_col,
+        ], scroll=ft.ScrollMode.ADAPTIVE),
+        bgcolor=C["surface"],
+        border=brd_top(C["border_light"]),
+        border_radius=ft.BorderRadius(0,0,0,0),
+        padding=pad(14),
+        visible=False, height=0,   # 0 quando fechado → não ocupa espaço
+        animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
+    )
+
+    def toggle_hist(e):
+        hist_open[0]       = not hist_open[0]
+        hist_panel.visible = hist_open[0]
+        hist_panel.height  = 360 if hist_open[0] else 0   # liberta espaço quando fechado
+        btn_hist_icon.name = (ft.Icons.KEYBOARD_ARROW_DOWN_ROUNDED
+                               if hist_open[0] else ft.Icons.HISTORY_ROUNDED)
+        if hist_open[0]:
+            refresh_hist(cur_mode[0])
+        page.update()
+
 """
 async def main(page: ft.Page):
     storage_paths = ft.StoragePaths()
