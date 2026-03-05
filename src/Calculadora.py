@@ -685,6 +685,7 @@ def main(page: ft.Page):
             pass
 
     # ── Restaurar de client_storage se DB ainda estiver vazio ────────────────
+
     try:
         if not hist_db.fetch():
             cs_raw = page.client_storage.get(_CS_KEY)
@@ -702,6 +703,14 @@ def main(page: ft.Page):
     except Exception:
         pass
 
+    # ── Estado da Aplicação ────────────────
+
+    cur_mode  = [CFG.default_mode]
+    hist_open = [False]
+    parts: list[str] = []
+
+    def get_expr():
+        return "".join(parts)
 
 async def main(page: ft.Page):
     storage_paths = ft.StoragePaths()
