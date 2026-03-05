@@ -774,7 +774,168 @@ def main(page: ft.Page):
     #                    Layout Responsivo (Portrait / Landscape)
     # ===========================================================================
 
-    
+    # Caracterízação da estrutura de layout para os modos portrait e landscape, com adaptação dinâmica ao redimensionamento da janela
+    HEADER_H_PORT = 64
+    HEADER_H_LAND = 48
+    TABBAR_H_PORT = 72
+    TABBAR_H_LAND = 56
+    SAFE_EXTRA = 62
+
+    # Constantes de cálculo de dimensões responsivas 
+    DISPLAY_RATIO = 0.28
+    KBD_RATIO     = 0.70
+
+    # ── Display ──────────────────────────────────────────────────────────────────
+    display_area = ft.Container(
+        content=ft.Column([
+            ft.Row([
+                ft.Container(
+                    content=ft.Row([
+                        ft.Container(width=6, height=6,
+                                     border_radius=ft.BorderRadius(3,3,3,3),
+                                     bgcolor=MODE_COLORS[CFG.default_mode]),
+                        txt_mode,
+                    ], spacing=5),
+                    bgcolor=C["accent_dim"],
+                    border=brd(MODE_COLORS[CFG.default_mode] + "30"),
+                    border_radius=ft.BorderRadius(20,20,20,20),
+                    padding=padxy(10, 4),
+                ),
+                ft.Container(expand=True),
+            ]),
+            ft.Container(expand=True),
+            txt_expr,
+            ft.Container(height=4),
+            txt_result,
+            txt_err,
+            ft.Container(height=6),
+        ], spacing=0, expand=True),
+        bgcolor=UI["display_bg"],
+        padding=padltrb(20, 10, 20, 0),
+        height=200,
+    )
+
+    # ── Teclado ──────────────────────────────────────────────────────────────────
+    kbd_inner_col = ft.Column(spacing=6, scroll=None)
+    kbd_container = ft.Container(
+        content=kbd_inner_col,
+        bgcolor=UI["page_bg"],
+        padding=padltrb(8, 4, 8, 4),
+        height=400,
+        clip_behavior=ft.ClipBehavior.HARD_EDGE,
+    )
+
+    # ── Lógica de orientação ─────────────────────────────────────────────────────
+    _landscape = [False]
+
+    def _is_landscape(pw, ph):
+        return pw is not None and ph is not None and pw > ph
+
+    def _calc_heights(pw: int, ph: int):
+
+        # Calcula alturas px exactas por orientação.
+        landscape = _is_landscape(pw, ph)
+        ph = max(ph, 200)
+        if landscape:
+            hdr_h = HEADER_H_LAND
+            tab_h = TABBAR_H_LAND
+            avail = max(ph - hdr_h - tab_h - SAFE_EXTRA, 120)
+            d_h   = 0
+            k_h   = avail
+        else:
+            hdr_h = HEADER_H_PORT
+            tab_h = TABBAR_H_PORT
+            avail = max(ph - hdr_h - tab_h - SAFE_EXTRA, 200)
+            d_h   = int(avail * DISPLAY_RATIO)
+            k_h   = avail - d_h - 6   # espaço restante após display + gap mínimo
+        return d_h, k_h, landscape
+
+    def _apply_heights(pw=None, ph=None):
+
+        # Aplica alturas e adapta scroll/visibilidade/expand por orientação.
+        pw = pw or (page.width  if page.width  else 400)
+        ph = ph or (page.height if page.height else 700)
+        d_h, k_h, landscape = _calc_heights(int(pw), int(ph))
+        _landscape[0] = landscape
+        display_area.height  = d_h
+        display_area.visible = (d_h > 0)
+
+        if landscape:
+            # Landscape: altura fixa px → overflow activado → scroll
+            kbd_container.height = k_h
+            kbd_container.expand = False
+
+        else:
+            # Portrait: altura fixa = k_h calculado por _calc_heights.
+            # SAFE_EXTRA = 62 desconta page.padding (28+34) do page.height.
+            kbd_container.height = k_h
+            kbd_container.expand = False
+
+        # Scroll interno e alturas das rows
+        if hasattr(kbd_container, "content") and kbd_container.content:
+            if landscape:
+                # Landscape: scroll activo, botões com altura fixa BTN_H_LAND
+                kbd_container.content.scroll = ft.ScrollMode.ADAPTIVE
+                kbd_container.content.expand = False
+            else:
+
+                if kbd_inner_col.controls:
+                    kbd_col = kbd_inner_col.controls[0]
+                    if hasattr(kbd_col, "controls") and kbd_col.controls:
+                        rows = [c for c in kbd_col.controls
+                                if isinstance(c, ft.Row)]
+                        n  = len(rows)
+                        sp = int(getattr(kbd_col, "spacing", 5) or 5)
+                        # altura mínima total (+ 8px padding interno do container)
+                        min_total = n * BTN_H_FN + max(0, n - 1) * sp + 8
+
+                        if n > 0 and min_total <= k_h:
+                            # ── CASO A ──────────────────────────────────────
+                            kbd_container.content.scroll = None
+                            kbd_container.content.expand = True
+                            for row in rows:
+                                row.height = None
+                                row.expand  = True
+
+                        else:
+                            # ── CASO B ──────────────────────────────────────
+                            kbd_container.content.scroll = ft.ScrollMode.ADAPTIVE
+                            kbd_container.content.expand = False
+                            
+                            for row in rows:
+                                row.expand  = False   # obrigatório antes de scroll
+                                row.height  = BTN_H
+
+    # Guarda a última orientação para detectar rotação
+    _last_landscape = [None]  # None = primeira inicialização
+
+    def on_resize(e):
+        """
+        Chamado pelo Flet em cada rotação / redimensionamento.
+
+        Lógica orientação-adaptativa:
+          1. Recalcula alturas px (display + teclado).
+          2. Se a orientação MUDOU (portrait ↔ landscape):
+             → Faz rebuild_body para recriar botões com alturas correctas.
+               Portrait : expand=True  — botões crescem para preencher espaço.
+               Landscape: height=fixo  — botões têm px fixo → fazem overflow
+                          → kbd_inner_col.scroll=ADAPTIVE activa.
+          3. Se a orientação NÃO mudou: apenas page.update() (mais rápido).
+        """
+        pw = int(e.width)  if (hasattr(e, "width")  and e.width)  else (page.width  or 400)
+        ph = int(e.height) if (hasattr(e, "height") and e.height) else (page.height or 700)
+        _apply_heights(pw, ph)
+
+        new_land = _landscape[0]
+        if new_land != _last_landscape[0]:
+            # Orientação mudou → rebuildar teclado com alturas correctas
+            _last_landscape[0] = new_land
+            rebuild_body(cur_mode[0])  # rebuild já chama page.update()
+        else:
+            page.update()
+
+    page.on_resize = on_resize
+
 """
 async def main(page: ft.Page):
     storage_paths = ft.StoragePaths()
