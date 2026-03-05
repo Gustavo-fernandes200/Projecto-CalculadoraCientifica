@@ -711,6 +711,67 @@ def main(page: ft.Page):
 
     def get_expr():
         return "".join(parts)
+    
+    # ======== Função de Estado dentro Display =========================================
+
+    txt_mode = ft.Text(
+        CFG.default_mode.upper(), size=10, color=MODE_COLORS[CFG.default_mode],
+        weight=ft.FontWeight.W_700, font_family="mono")
+
+    txt_expr = ft.Text(
+        "", size=14, color=UI["display_expr"],
+        font_family="mono",
+        text_align=ft.TextAlign.RIGHT,
+        overflow=ft.TextOverflow.ELLIPSIS, max_lines=2)
+
+    txt_result = ft.Text(
+        "0", size=58, color=UI["display_main"],
+        font_family="mono",
+        text_align=ft.TextAlign.RIGHT,
+        weight=ft.FontWeight.W_300,
+        overflow=ft.TextOverflow.ELLIPSIS)
+
+    txt_err = ft.Text(
+        "", size=11, color=C["danger"],
+        font_family="mono",
+        text_align=ft.TextAlign.RIGHT,
+        italic=True, visible=False)
+
+    def set_ok(val, label=""):
+        txt_result.value = val
+        txt_result.color = UI["display_main"]
+        txt_result.size  = 58 if len(val) < 10 else (42 if len(val) < 16 else 28)
+        txt_err.visible  = False
+        if label:
+            txt_expr.value = _fmt_expr(label)
+        page.update()
+
+    def set_err(msg):
+        txt_result.value = "Erro"
+        txt_result.color = C["danger"]
+        txt_result.size  = 36
+        txt_err.value    = msg[:80]
+        txt_err.visible  = True
+        page.update()
+
+    def reset():
+        parts.clear()
+        txt_expr.value   = ""
+        txt_result.value = "0"
+        txt_result.color = UI["display_main"]
+        txt_result.size  = 58
+        txt_err.visible  = False
+        page.update()
+
+    def upd():
+
+        txt_expr.value   = _fmt_expr(get_expr())
+        txt_err.visible  = False
+        txt_result.color = UI["display_expr"]
+        page.update()
+
+    
+
 
 async def main(page: ft.Page):
     storage_paths = ft.StoragePaths()
