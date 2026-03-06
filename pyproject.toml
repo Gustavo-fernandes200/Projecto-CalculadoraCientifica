@@ -5,7 +5,7 @@ description = ""
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-    { name = "Flet developer", email = "you@example.com" }
+    { name = "Flet developer", email = "a85254@ualg.com" }
 ]
 dependencies = [
     "flet>=0.80.5",
@@ -28,3 +28,4 @@ copyright = "Copyright (C) 2023-2026 by Flet"
 
 [tool.flet.app]
 path = "src"
+
