@@ -1476,6 +1476,5 @@ def main(page: ft.Page):
 #                               Ponto de Entrada
 # ===============================================================================
 
-if __name__ == "__main__":
-    ft.run(main, view=ft.AppView.FLET_APP)
+ft.run(main, view=ft.AppView.FLET_BROWSER, port=8800)
 
