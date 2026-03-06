@@ -210,6 +210,7 @@ BTN_SIMBOLS = {
 def mk(key: str, handler, *, h=None, bg=None, fg=None) -> ft.Container:
     
     cfg   = BTN_SIMBOLS[key]
+    label = key
 
     return btn(
         label, handler,
