@@ -1476,5 +1476,6 @@ def main(page: ft.Page):
 #                               Ponto de Entrada
 # ===============================================================================
 
-ft.run(target=main, view=ft.WEB_BROWSER, host="0.0.0.0", port=8080)
+if __name__ == "__main__":
+    ft.run(target=main, view=ft.AppView.WEB_BROWSER, host="0.0.0.0", port=5000)
 

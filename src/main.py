@@ -1,44 +1,27 @@
 import flet as ft
-from Calculadora import CFG, C, UI, MODE_COLORS, MODE_ICONS
+import uvicorn
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from Calculadora import main
 
 
-def main(page: ft.Page):
-    page.title = CFG.title
-    page.bgcolor = C["bg"]
-    page.padding = 0
-
-    page.add(
-        ft.SafeArea(
-            expand=True,
-            content=ft.Container(
-                expand=True,
-                bgcolor=C["bg"],
-                content=ft.Column(
-                    expand=True,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    controls=[
-                        ft.Container(
-                            padding=ft.Padding.all(20),
-                            content=ft.Text(
-                                CFG.title,
-                                size=28,
-                                weight=ft.FontWeight.BOLD,
-                                color=C["text_primary"],
-                            ),
-                        ),
-                        ft.Container(
-                            padding=ft.Padding.all(20),
-                            content=ft.Text(
-                                "Calculadora Científica — em desenvolvimento",
-                                size=16,
-                                color=C["text_second"],
-                            ),
-                        ),
-                    ],
-                ),
-            ),
-        )
-    )
+class RemoveRestrictiveHeaders(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers.__delitem__("cross-origin-embedder-policy") if "cross-origin-embedder-policy" in response.headers else None
+        response.headers.__delitem__("cross-origin-opener-policy") if "cross-origin-opener-policy" in response.headers else None
+        return response
 
 
-ft.run(main, host="0.0.0.0", port=5000, view=ft.AppView.WEB_BROWSER)
+app = ft.run(
+    main,
+    host="0.0.0.0",
+    port=5000,
+    view=ft.AppView.WEB_BROWSER,
+    export_asgi_app=True,
+)
+
+app.add_middleware(RemoveRestrictiveHeaders)
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=5000, ws="websockets-sansio")
